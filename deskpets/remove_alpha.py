@@ -14,15 +14,15 @@ class GifHelper:
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
             abs_path = os.path.join(base_dir, path)
-            img = Image.open(abs_path)
             frames = []
-            try:
-                while True:
-                    frame = img.convert("RGBA").transpose(Image.FLIP_TOP_BOTTOM)
-                    frames.append(frame)
-                    img.seek(img.tell() + 1)
-            except EOFError:
-                pass
+            with Image.open(abs_path) as img:
+                try:
+                    while True:
+                        frame = img.convert("RGBA").transpose(Image.FLIP_TOP_BOTTOM)
+                        frames.append(frame)
+                        img.seek(img.tell() + 1)
+                except EOFError:
+                    pass
             return frames
         except Exception as e:
             print(e)

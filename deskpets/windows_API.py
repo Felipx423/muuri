@@ -6,6 +6,7 @@ from ctypes import windll
 from ctypes import wintypes
 
 import win32gui
+import win32con
 
 BASE_DIR = os.path.dirname(__file__)
 CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
@@ -79,12 +80,14 @@ def load_config():
 
 class Windows:
     @staticmethod
-    def hwnd(x, y, width, height):
+    def hwnd(x, y, width, height, draggable=False):
         try:
             cfg = load_config()
             layer = cfg.get("layer", "front")
 
-            ex_style = WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE
+            ex_style = WS_EX_LAYERED | WS_EX_NOACTIVATE
+            if not draggable:
+                ex_style |= WS_EX_TRANSPARENT
 
             if layer == "front" and not is_full_screen():
                 ex_style |= WS_EX_TOPMOST
@@ -103,6 +106,104 @@ class Windows:
         except Exception as e:
             print(e)
             traceback.print_exc()
+
+    @staticmethod
+    def enable_drag(pet):
+        def window_proc(hwnd, message, wparam, lparam):
+            if message == win32con.WM_NCHITTEST:
+                return win32con.HTCLIENT
+            if message == win32con.WM_MOUSEACTIVATE:
+                return win32con.MA_NOACTIVATE
+            if message in (win32con.WM_LBUTTONDOWN, win32con.WM_LBUTTONDBLCLK):
+                if pet.mouse_pressed:
+                    return 0
+                pet.drag_offset = (ctypes.c_short(lparam & 0xffff).value,
+                                   ctypes.c_short((lparam >> 16) & 0xffff).value)
+                pet.mouse_pressed = True
+                pet.motion.begin(pet.x, pet.y)
+                pet.click_sequence.press(win32gui.ClientToScreen(hwnd, pet.drag_offset))
+                pet.dragging = pet.draggable
+                pet.drag_direction = pet.state.direction
+                win32gui.SetCapture(hwnd)
+                return 0
+            if message == win32con.WM_MOUSEMOVE and pet.mouse_pressed:
+                point = (ctypes.c_short(lparam & 0xffff).value,
+                         ctypes.c_short((lparam >> 16) & 0xffff).value)
+                Windows.move_drag(pet, *win32gui.ClientToScreen(hwnd, point))
+                return 0
+            if message == win32con.WM_LBUTTONUP and pet.mouse_pressed:
+                point = (ctypes.c_short(lparam & 0xffff).value,
+                         ctypes.c_short((lparam >> 16) & 0xffff).value)
+                screen_point = win32gui.ClientToScreen(hwnd, point)
+                Windows.move_drag(pet, *screen_point)
+                Windows.finish_press(pet, screen_point)
+                return 0
+            if (message in (win32con.WM_CAPTURECHANGED, win32con.WM_CANCELMODE)
+                    and pet.mouse_pressed):
+                Windows.end_drag(pet)
+            return win32gui.CallWindowProc(pet.old_window_proc, hwnd, message, wparam, lparam)
+
+        pet.drag_window_proc = window_proc
+        pet.old_window_proc = win32gui.SetWindowLong(pet.hwnd, win32con.GWL_WNDPROC, window_proc)
+
+    @staticmethod
+    def move_drag(pet, mouse_x, mouse_y):
+        pet.click_sequence.move((mouse_x, mouse_y))
+        if not pet.draggable or not pet.click_sequence.moved:
+            return
+        pet.free_roam = True
+        previous_x = pet.x
+        pet.x = max(0, min(mouse_x - pet.drag_offset[0], pet.screen_width - pet.width))
+        if pet.x != previous_x:
+            pet.drag_direction = 1 if pet.x > previous_x else -1
+        pet.y = max(0, min(mouse_y - pet.drag_offset[1], pet.screen_height - pet.height))
+        pet.y_def = pet.y
+        pet.motion.track(pet.x, pet.y)
+        win32gui.SetWindowPos(pet.hwnd, 0, int(pet.x), int(pet.y), 0, 0,
+                             win32con.SWP_NOSIZE | win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
+
+    @staticmethod
+    def finish_press(pet, point):
+        was_dragged = pet.draggable and pet.click_sequence.moved
+        open_settings = pet.click_sequence.release(point)
+        if pet.physics_enabled and was_dragged:
+            pet.motion.launch()
+        else:
+            pet.motion.stop()
+        Windows.end_drag(pet, cancel_clicks=False)
+        owner = getattr(pet, "main_window", None)
+        if open_settings and pet.settings_clicks and owner is not None:
+            owner.show_pet_settings.emit(pet.species)
+
+    @staticmethod
+    def end_drag(pet, cancel_clicks=True):
+        pet.dragging = False
+        pet.mouse_pressed = False
+        if cancel_clicks:
+            pet.click_sequence.reset()
+            pet.motion.stop()
+        if pet.hwnd and win32gui.GetCapture() == pet.hwnd:
+            win32gui.ReleaseCapture()
+
+    @staticmethod
+    def update_drag(pet):
+        # Poll while captured so a fast mouse move outside a non-activating
+        # pet window still follows the pointer and release cannot get stuck.
+        if not pet.mouse_pressed and not pet.dragging:
+            return
+        if not user32.GetAsyncKeyState(win32con.VK_LBUTTON) & 0x8000:
+            if pet.mouse_pressed:
+                Windows.finish_press(pet, win32gui.GetCursorPos())
+            else:
+                Windows.end_drag(pet)
+            return
+        Windows.move_drag(pet, *win32gui.GetCursorPos())
+
+    @staticmethod
+    def update_physics(pet, elapsed):
+        if pet.motion.advance(pet, elapsed):
+            win32gui.SetWindowPos(pet.hwnd, 0, int(pet.x), int(pet.y), 0, 0,
+                                 win32con.SWP_NOSIZE | win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
 
     @staticmethod
     def taskbar_settings():
@@ -126,7 +227,7 @@ class Windows:
                 tb_edge = abd.uEdge  # 0=left,1=top,2=right,3=bottom
                 return tb_height, bool(state & ABS_AUTOHIDE), tb_edge
             else:
-                return 60, bool(state & ABS_AUTOHIDE)
+                return 60, bool(state & ABS_AUTOHIDE), 3
         except Exception as e:
             print(e)
             traceback.print_exc()

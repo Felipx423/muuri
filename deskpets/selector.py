@@ -227,12 +227,15 @@ class Main(QtWidgets.QScrollArea):
 
                 old = existing_map.get(species, {})
 
-                result["pets"].append({
+                entry = {
                     "species": species,
                     "colors": chosen,
                     "enabled": block.checkbox.isChecked(),
                     "size": old.get("size", "Small")  # préserve
-                })
+                }
+                if "draggable" in old:
+                    entry["draggable"] = old["draggable"]
+                result["pets"].append(entry)
 
             with open(LIST_FILE, "w", encoding="utf-8") as f:
                 json.dump(result, f, indent=4)

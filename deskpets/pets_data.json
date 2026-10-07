@@ -1638,5 +1638,58 @@
                 "speed_animation": 1.0
             }
         }
+    },
+    "muuri": {
+        "colors": [
+            "blue"
+        ],
+        "states": {
+            "blue": {
+                "idle": "media/muuri/blue_idle_8fps.gif",
+                "lie": "media/muuri/blue_lie_8fps.gif",
+                "run": "media/muuri/blue_run_8fps.gif",
+                "swipe": "media/muuri/blue_swipe_8fps.gif",
+                "walk": "media/muuri/blue_walk_8fps.gif",
+                "walk_fast": "media/muuri/blue_walk_fast_8fps.gif",
+                "drag": "media/muuri/blue_drag_8fps.gif"
+            }
+        },
+        "defaults": {
+            "idle": {
+                "hold": 16,
+                "movement_speed": 0,
+                "speed_animation": 0.75
+            },
+            "lie": {
+                "hold": 24,
+                "movement_speed": 0,
+                "speed_animation": 0.65
+            },
+            "swipe": {
+                "hold": 8,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            },
+            "walk": {
+                "hold": 32,
+                "movement_speed": 2,
+                "speed_animation": 1.0
+            },
+            "walk_fast": {
+                "hold": 24,
+                "movement_speed": 4,
+                "speed_animation": 1.25
+            },
+            "run": {
+                "hold": 16,
+                "movement_speed": 6,
+                "speed_animation": 1.5
+            },
+            "drag": {
+                "hold": 0,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            }
+        }
     }
 }

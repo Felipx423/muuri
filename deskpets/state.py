@@ -18,12 +18,13 @@ class State:
     def next(self, pet):
         try:
             self.counter += 1
+            movement_speed = self.movement_speed * getattr(pet, "movement_multiplier", 1.0)
             if self.name == "wallclimb":
-                pet.y -= self.movement_speed
+                pet.y -= movement_speed
                 if pet.y < 0:
                     pet.y = 0
             elif self.movement_speed != 0:
-                pet.x += self.movement_speed * self.direction
+                pet.x += movement_speed * self.direction
                 if pet.x < 0:
                     pet.x = 0
                     self.direction *= -1

@@ -32,8 +32,8 @@ def go_climb(self):
 def squirrel_climb(self):
     try:
         if self.wall_scene_step == "go_to_wall":
-            if self.x + self.state.movement_speed < self.screen_width - self.width:
-                self.x += self.state.movement_speed
+            if self.x + (self.state.movement_speed * self.movement_multiplier) < self.screen_width - self.width:
+                self.x += (self.state.movement_speed * self.movement_multiplier)
                 return
 
             self.x = self.screen_width - self.width
@@ -54,10 +54,10 @@ def squirrel_climb(self):
                 if random.random() < 0.05:
                     mid = self.y
                 else:
-                    self.y -= self.state.movement_speed
+                    self.y -= (self.state.movement_speed * self.movement_multiplier)
                     return
             elif self.y > mid:
-                self.y -= self.state.movement_speed
+                self.y -= (self.state.movement_speed * self.movement_multiplier)
                 return
 
             info = self.STATES_INFO["walldig"]
@@ -119,8 +119,8 @@ def squirrel_climb(self):
 
         elif self.wall_scene_step == "fall_frame":
             if self.y < self.y_def:
-                self.y += self.state.movement_speed
-                self.x -= max(1, self.state.movement_speed // 2)
+                self.y += (self.state.movement_speed * self.movement_multiplier)
+                self.x -= max(1, (self.state.movement_speed * self.movement_multiplier) // 2)
                 return
 
             self.y = self.y_def

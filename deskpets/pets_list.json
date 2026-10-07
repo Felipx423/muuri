@@ -5,20 +5,30 @@
             "colors": [
                 "white"
             ],
-            "enabled": true,
+            "enabled": false,
             "size": "Small"
         },
         {
             "species": "clippy",
-            "colors": [],
+            "colors": [
+                "brown"
+            ],
             "enabled": false,
-            "size": "Original"
+            "size": "Original",
+            "draggable": false,
+            "movement_multiplier": 1.0,
+            "animation_multiplier": 1.0
         },
         {
             "species": "cockatiel",
-            "colors": [],
+            "colors": [
+                "brown"
+            ],
             "enabled": false,
-            "size": "Original"
+            "size": "Original",
+            "draggable": false,
+            "movement_multiplier": 1.0,
+            "animation_multiplier": 1.0
         },
         {
             "species": "crab",
@@ -41,8 +51,11 @@
             "colors": [
                 "brown"
             ],
-            "enabled": true,
-            "size": "Small"
+            "enabled": false,
+            "size": "Really Big",
+            "draggable": false,
+            "movement_multiplier": 1.0,
+            "animation_multiplier": 1.0
         },
         {
             "species": "fox",
@@ -127,7 +140,7 @@
             "colors": [
                 "brown"
             ],
-            "enabled": true,
+            "enabled": false,
             "size": "Original"
         },
         {
@@ -151,6 +164,19 @@
             ],
             "enabled": false,
             "size": "Original"
+        },
+        {
+            "species": "muuri",
+            "colors": [
+                "blue"
+            ],
+            "enabled": true,
+            "size": "Medium",
+            "draggable": true,
+            "settings_clicks": 4,
+            "movement_multiplier": 1.19,
+            "animation_multiplier": 1.31,
+            "physics_enabled": true
         }
     ]
 }

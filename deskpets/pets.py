@@ -2,6 +2,7 @@ import ctypes
 import json
 import os
 import random
+import time
 import traceback
 
 from PIL import Image
@@ -9,6 +10,8 @@ from PIL import Image
 from .remove_alpha import GifHelper
 from .squirrel_climb import squirrel_climb, go_climb
 from .state import State
+from .clicks import ClickSequence
+from .physics import Motion
 from .windows_API import POINT, Windows
 
 # Configuration
@@ -25,7 +28,8 @@ user32 = ctypes.windll.user32
 
 # Pet window
 class Pet:
-    def __init__(self, species, color, fps, size):
+    def __init__(self, species, color, fps, size, draggable=False, settings_clicks=0,
+                 movement_multiplier=1.0, animation_multiplier=1.0, physics_enabled=False):
         try:
             self.hbitmaps = None
             self.frame_interval = None
@@ -38,6 +42,18 @@ class Pet:
             self.color = color
             self.fps = fps
             self.size = size
+            self.draggable = draggable
+            self.settings_clicks = settings_clicks
+            self.click_sequence = ClickSequence(settings_clicks or 4)
+            self.mouse_pressed = False
+            self.movement_multiplier = movement_multiplier
+            self.animation_multiplier = animation_multiplier
+            self.physics_enabled = physics_enabled
+            self.motion = Motion()
+            self.dragging = False
+            self.drag_direction = 1
+            self.drag_previous_state = None
+            self.free_roam = False
             self.screen_width = user32.GetSystemMetrics(0)
             self.screen_height = user32.GetSystemMetrics(1)
 
@@ -65,8 +81,12 @@ class Pet:
                 self.y_def = self.screen_height - self.height - self.taskbar_height
                 self.y = self.screen_height - self.height - self.taskbar_height
             self.x = self.screen_width - self.width
+            self.floor_y = self.y_def
 
-            self.hwnd = Windows.hwnd(self.x, self.y, self.width, self.height)
+            self.hwnd = Windows.hwnd(self.x, self.y, self.width, self.height,
+                                     draggable or settings_clicks)
+            if draggable or settings_clicks:
+                Windows.enable_drag(self)
 
             self.immunity = False
             self.lie_duration = 24
@@ -80,10 +100,11 @@ class Pet:
         except Exception as e:
             print(e)
             traceback.print_exc()
+            raise
 
     def random_state(self, exception=None):
         try:
-            keys = list(self.STATES_INFO.keys())
+            keys = [name for name in self.STATES_INFO if name != "drag"]
 
             if exception:
                 if isinstance(exception, str):
@@ -93,7 +114,7 @@ class Pet:
                         keys.remove(ex)
 
             if not keys:
-                keys = list(self.STATES_INFO.keys())
+                keys = [name for name in self.STATES_INFO if name != "drag"]
 
             name = random.choice(keys)
             info = self.STATES_INFO[name]
@@ -112,6 +133,37 @@ class Pet:
 
     def update_state(self):
         try:
+            if self.mouse_pressed and not self.dragging:
+                return
+            airborne = (self.physics_enabled and self.wall_scene_step is None
+                        and self.y < self.floor_y - 0.5)
+            if self.dragging or airborne:
+                if "drag" in self.STATES_INFO:
+                    if self.drag_previous_state is None:
+                        self.drag_previous_state = self.state
+                        info = self.STATES_INFO["drag"]
+                        self.state = State("drag", info["gif"], hold=info["hold"],
+                                           movement_speed=info["movement_speed"],
+                                           speed_animation=info["speed_animation"],
+                                           direction=self.drag_direction if self.dragging else self.state.direction)
+                        self.frame_animation()
+                    if self.dragging:
+                        self.state.direction = self.drag_direction
+                    elif abs(self.motion.vx) >= 5:
+                        self.state.direction = 1 if self.motion.vx > 0 else -1
+                return
+            if self.drag_previous_state is not None:
+                self.state = self.drag_previous_state
+                self.drag_previous_state = None
+                counter = self.state.counter
+                self.frame_animation()
+                self.state.counter = counter
+                return
+            if self.settings_clicks and self.click_sequence.count:
+                # Keep the pet under the pointer while the next click arrives.
+                if time.monotonic() - self.click_sequence.started_at <= 1.5:
+                    return
+                self.click_sequence.reset()
             pt = POINT()
             user32.GetCursorPos(ctypes.byref(pt))
             mouse_x, mouse_y = pt.x, pt.y
@@ -142,7 +194,7 @@ class Pet:
                 self.immunity = False
                 self.frame_animation()
 
-            min_x = self.screen_width - self.screen_width // 4  # left
+            min_x = 0 if self.free_roam else self.screen_width - self.screen_width // 4  # left
             max_x = self.screen_width - self.width  # right
             if self.x < min_x:
                 self.x = min_x
@@ -184,7 +236,8 @@ class Pet:
             self.current_frame = 0
             self.state.counter = 0
             if self.state.speed_animation != 0.0:
-                self.frame_interval = 1.0 / (self.fps * self.state.speed_animation)
+                self.state_interval = 1.0 / (self.fps * self.state.speed_animation)
+                self.frame_interval = self.state_interval / self.animation_multiplier
         except Exception as e:
             print(e)
             traceback.print_exc()

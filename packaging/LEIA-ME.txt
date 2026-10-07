@@ -1,0 +1,31 @@
+MUURI - Desktop pet para Windows 10/11 (64 bits)
+
+INSTALAR
+Abra Muuri-Setup.exe, avance e conclua. Não precisa instalar Python ou VS Code.
+O instalador cria um atalho na área de trabalho e no menu Iniciar.
+
+USAR
+Abra Iniciar Muuri. Quatro cliques rápidos nela abrem o painel.
+Arraste com o mouse. Ative a física no painel se quiser gravidade e arremesso.
+Clique em Aplicar para salvar. A bandeja, perto do relógio, tem a opção Sair.
+Só uma instância abre por sessão, mesmo clicando várias vezes no atalho.
+
+REMOVER
+Use Configurações do Windows > Aplicativos > Muuri > Desinstalar.
+Suas preferências ficam preservadas para uma possível reinstalação.
+Não inicia automaticamente com o Windows.
+
+CRÉDITOS
+Base: DeskPets, Minniti Julien (Jumitti), licença MIT preservada em LICENSE.
+https://github.com/Jumitti/DeskPets
+Inspirado em vscode-pets de tonybaloney; mídias originais e créditos preservados.
+https://github.com/tonybaloney/vscode-pets
+Muuri: referência fornecida pelo usuário e animações adaptadas para DeskPets.
+
+O código-fonte desta versão está em Muuri-codigo-fonte.zip, incluído na
+instalação (_internal), com instruções de compilação e testes. Seus assets
+estão na pasta _internal/deskpets/media, preservados sem duplicação no ZIP.
+Após extrair o fonte, copie essa pasta para deskpets/media antes de compilar.
+Bibliotecas e respectivas licenças: _internal/THIRD_PARTY_LICENSES.
+PyQt6 é distribuído sob GPL v3; consulte a licença incluída.
+Esta distribuição não possui assinatura digital própria.
