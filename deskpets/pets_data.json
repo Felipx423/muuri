@@ -1762,5 +1762,58 @@
                 "speed_animation": 1.0
             }
         }
+    },
+    "cato": {
+        "colors": [
+            "orange"
+        ],
+        "states": {
+            "orange": {
+                "idle": "media/cato/orange_idle_8fps.gif",
+                "walk": "media/cato/orange_walk_8fps.gif",
+                "walk_fast": "media/cato/orange_walk_fast_8fps.gif",
+                "run": "media/cato/orange_run_8fps.gif",
+                "swipe": "media/cato/orange_swipe_8fps.gif",
+                "lie": "media/cato/orange_lie_8fps.gif",
+                "drag": "media/cato/orange_drag_8fps.gif"
+            }
+        },
+        "defaults": {
+            "idle": {
+                "hold": 16,
+                "movement_speed": 0,
+                "speed_animation": 0.75
+            },
+            "walk": {
+                "hold": 32,
+                "movement_speed": 4,
+                "speed_animation": 1.0
+            },
+            "walk_fast": {
+                "hold": 24,
+                "movement_speed": 8,
+                "speed_animation": 1.25
+            },
+            "run": {
+                "hold": 16,
+                "movement_speed": 12,
+                "speed_animation": 1.5
+            },
+            "swipe": {
+                "hold": 8,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            },
+            "lie": {
+                "hold": 24,
+                "movement_speed": 0,
+                "speed_animation": 0.65
+            },
+            "drag": {
+                "hold": 0,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            }
+        }
     }
 }

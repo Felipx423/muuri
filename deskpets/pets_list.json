@@ -190,6 +190,19 @@
             "movement_multiplier": 1.0,
             "animation_multiplier": 1.0,
             "physics_enabled": false
+        },
+        {
+            "species": "cato",
+            "colors": [
+                "orange"
+            ],
+            "enabled": false,
+            "size": "Original",
+            "draggable": true,
+            "settings_clicks": 4,
+            "movement_multiplier": 1.0,
+            "animation_multiplier": 1.0,
+            "physics_enabled": false
         }
     ]
 }
