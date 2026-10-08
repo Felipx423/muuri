@@ -6,7 +6,8 @@ from collections import deque
 class Motion:
     """Pixel/second motion, independent of GIF speed and animation states."""
 
-    def __init__(self):
+    def __init__(self, profile=None):
+        self.profile = profile or {}
         self.samples = deque(maxlen=32)
         self.vx = 0.0
         self.vy = 0.0
@@ -33,8 +34,11 @@ class Motion:
             first, last = self.samples[0], self.samples[-1]
             elapsed = last[0]-first[0]
             if elapsed >= 0.008:
-                self.vx = max(-1400, min(1400, (last[1]-first[1])/elapsed))
-                self.vy = max(-1400, min(1400, (last[2]-first[2])/elapsed))
+                multiplier = self.profile.get("launch_multiplier", 1.0)
+                self.vx = max(-1400, min(1400, (last[1]-first[1])/elapsed*multiplier))
+                self.vy = max(-1400, min(1400, (last[2]-first[2])/elapsed*multiplier))
+                if self.vx or self.vy:
+                    self.vy = max(-1400, self.vy-self.profile.get("launch_lift", 0))
         self.samples.clear()
 
     def advance(self, pet, elapsed):
@@ -57,12 +61,15 @@ class Motion:
             self.vy = 0
             self.vx *= math.exp(-12*elapsed)
         else:
-            self.vy = min(1600, self.vy+1800*elapsed)
+            glide = self.profile.get("glide_factor", 0)*min(abs(self.vx)/400, 1)
+            fall_limit = self.profile.get("max_fall_speed", 1600)*(1-glide)
+            self.vy = min(fall_limit, (self.vy+self.profile.get("gravity", 1800)*elapsed)
+                          * math.exp(-self.profile.get("vertical_resistance", 0)*elapsed))
             pet.y += self.vy*elapsed
-            self.vx *= math.exp(-1.6*elapsed)
+            self.vx *= math.exp(-self.profile.get("air_resistance", 1.6)*elapsed)
             if pet.y >= floor:
                 pet.y = floor
-                self.vy = -self.vy*0.25 if self.vy > 140 else 0
+                self.vy = -self.vy*self.profile.get("bounce", 0.25) if self.vy > 140 else 0
         pet.x += self.vx*elapsed
         right = max(0, pet.screen_width-pet.width)
         if pet.x < 0 or pet.x > right:

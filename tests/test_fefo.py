@@ -15,11 +15,11 @@ from deskpets.state import State
 from deskpets.window import MainWindow, draw_pet_frame
 
 
-STATES = {'idle', 'walk', 'walk_fast', 'run', 'swipe', 'lie', 'drag'}
+STATES = {'idle', 'walk', 'walk_fast', 'run', 'swipe', 'lie', 'drag', 'fly'}
 
 
 class FefoAssetTests(unittest.TestCase):
-    def test_seven_states_original_128_alpha_loop_and_palette(self):
+    def test_eight_states_original_128_alpha_loop_and_palette(self):
         data = PETS_DATA['fefo']
         self.assertEqual(data['colors'], ['green'])
         self.assertEqual(set(data['states']['green']), STATES)
@@ -92,13 +92,13 @@ class FefoIntegrationTests(unittest.TestCase):
         self.panel.select(species)
         self.panel.activate_selected()
 
-    def test_preview_seven_states_sizes_and_independent_speeds(self):
+    def test_preview_eight_states_sizes_and_independent_speeds(self):
         before = self.list_path.read_bytes()
         self.panel.select('fefo')
         self.assertFalse(self.panel.is_dirty())
-        self.assertEqual(self.panel.preview_state.count(), 7)
+        self.assertEqual(self.panel.preview_state.count(), 8)
         self.assertEqual(self.panel.size.currentData(), 'Original')
-        for index in range(7):
+        for index in range(8):
             self.panel.preview_state.setCurrentIndex(index)
             self.assertEqual(len(self.panel.preview.frames), 8)
             self.assertEqual(self.panel.preview.frames[0].height(), 128)
@@ -115,7 +115,7 @@ class FefoIntegrationTests(unittest.TestCase):
         self.panel.movement.setValue(50)
         self.assertEqual(self.panel.preview.velocity, velocity/2)
         self.assertEqual(self.panel.preview.fps, fps*2)
-        for state in ('idle', 'lie', 'swipe', 'drag'):
+        for state in ('idle', 'lie', 'swipe', 'drag', 'fly'):
             self.panel.preview_state.setCurrentIndex(self.panel.preview_state.findData(state))
             self.assertEqual(self.panel.preview.velocity, 0)
         self.assertEqual(self.list_path.read_bytes(), before)
@@ -157,6 +157,65 @@ class FefoIntegrationTests(unittest.TestCase):
         self.assertTrue(self.panel.apply())
         self.stop_worker()
         self.assertEqual([p.species for p in self.window.pets], ['fefo'])
+
+    def test_drag_flight_regrab_landing_restores_ground_state(self):
+        self.choose('fefo')
+        self.panel.physics.setChecked(True)
+        self.assertTrue(self.panel.apply())
+        self.stop_worker()
+        pet = self.window.pets[0]
+        info = pet.STATES_INFO['walk']
+        ground = State('walk', info['gif'], hold=32, movement_speed=2, direction=-1)
+        pet.state = ground
+        pet.frame_animation()
+        ground.counter = 7
+        pet.y = pet.floor_y-200
+        pet.dragging = True
+        pet.drag_direction = -1
+        pet.update_state()
+        self.assertEqual(pet.state.name, 'drag')
+        self.assertIs(pet.drag_previous_state, ground)
+        pet.dragging = False
+        pet.motion.vx = 100
+        pet.update_state()
+        self.assertEqual((pet.state.name, pet.state.direction), ('fly', 1))
+        pet.current_frame = 3
+        pet.motion.vx = -100
+        pet.update_state()
+        self.assertEqual((pet.state.direction, pet.current_frame), (-1, 3))
+        pet.dragging = True
+        pet.update_state()
+        self.assertEqual(pet.state.name, 'drag')
+        self.assertIs(pet.drag_previous_state, ground)
+        pet.dragging = False
+        pet.update_state()
+        self.assertEqual(pet.state.name, 'fly')
+        pet.y = pet.floor_y
+        pet.update_state()
+        self.assertIs(pet.state, ground)
+        self.assertEqual(ground.counter, 7)
+        self.assertIsNone(pet.drag_previous_state)
+        for _ in range(100):
+            self.assertNotIn(pet.random_state().name, ('drag', 'fly'))
+        pet.physics_enabled = False
+        pet.y = pet.floor_y-200
+        pet.update_state()
+        self.assertNotEqual(pet.state.name, 'fly')
+
+    def test_muuri_retains_default_airborne_drag_and_species_fallback(self):
+        pet = self.window.pets[0]
+        self.assertEqual(pet.motion.profile, {})
+        pet.physics_enabled = True
+        pet.y = pet.floor_y-200
+        pet.update_state()
+        self.assertEqual(pet.state.name, 'drag')
+        pet.y = pet.floor_y
+        pet.update_state()
+        self.assertNotEqual(pet.state.name, 'drag')
+        pet.physics_profile = {'airborne_animation': 'missing'}
+        pet.y = pet.floor_y-200
+        pet.update_state()
+        self.assertEqual(pet.state.name, 'drag')
 
     def test_native_states_drag_mirroring_gravity_and_throw(self):
         self.choose('fefo')
@@ -224,6 +283,8 @@ class FefoIntegrationTests(unittest.TestCase):
             windows_API.Windows.finish_press(pet, (240,90))
         self.assertNotEqual(pet.motion.vx, 0)
         self.assertLess(pet.motion.vy, 0)
+        pet.update_state()
+        self.assertEqual(pet.state.name, 'fly')
         pet.motion.stop()
         y = pet.y
         windows_API.Windows.update_physics(pet, 0.016)

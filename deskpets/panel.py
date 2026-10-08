@@ -14,7 +14,7 @@ SIZES = [("Very Small", "Bem pequeno", 20), ("Small", "Pequeno", 40),
          ("Big", "Grande", 150), ("Really Big", "Bem grande", 200)]
 STATE_NAMES = {"idle": "Parada", "walk": "Andando", "walk_fast": "Trotando",
                "run": "Correndo", "lie": "Descansando", "swipe": "Reação",
-               "drag": "Sendo arrastada"}
+               "drag": "Sendo arrastada", "fly": "Voando"}
 FIELDS = ("enabled", "colors", "size", "draggable", "physics_enabled", "movement_multiplier", "animation_multiplier")
 STYLE = """
 QWidget { color: #223957; font-family: 'Segoe UI'; font-size: 13px; }
@@ -328,6 +328,8 @@ class SettingsPanel(QtWidgets.QWidget):
         self.enabled.setChecked(entry.get("enabled", True))
         self.draggable.setChecked(entry.get("draggable", False))
         self.physics.setChecked(entry.get("physics_enabled", False))
+        self.physics.setToolTip(PETS_DATA[self.species].get("physics", {}).get(
+            "description", "Ligada: gravidade, arremesso e quique leve. Desligada: o pet permanece onde você o soltar."))
         while self.colors_layout.count():
             self.colors_layout.takeAt(0).widget().deleteLater()
         self.color_checks = {}

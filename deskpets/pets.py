@@ -49,7 +49,8 @@ class Pet:
             self.movement_multiplier = movement_multiplier
             self.animation_multiplier = animation_multiplier
             self.physics_enabled = physics_enabled
-            self.motion = Motion()
+            self.physics_profile = PETS_DATA[species].get("physics", {})
+            self.motion = Motion(self.physics_profile)
             self.dragging = False
             self.drag_direction = 1
             self.drag_previous_state = None
@@ -104,7 +105,8 @@ class Pet:
 
     def random_state(self, exception=None):
         try:
-            keys = [name for name in self.STATES_INFO if name != "drag"]
+            interaction_states = {"drag", self.physics_profile.get("airborne_animation")}
+            keys = [name for name in self.STATES_INFO if name not in interaction_states]
 
             if exception:
                 if isinstance(exception, str):
@@ -114,7 +116,7 @@ class Pet:
                         keys.remove(ex)
 
             if not keys:
-                keys = [name for name in self.STATES_INFO if name != "drag"]
+                keys = [name for name in self.STATES_INFO if name not in interaction_states]
 
             name = random.choice(keys)
             info = self.STATES_INFO[name]
@@ -138,11 +140,15 @@ class Pet:
             airborne = (self.physics_enabled and self.wall_scene_step is None
                         and self.y < self.floor_y - 0.5)
             if self.dragging or airborne:
-                if "drag" in self.STATES_INFO:
+                name = "drag" if self.dragging else self.physics_profile.get("airborne_animation", "drag")
+                if name not in self.STATES_INFO:
+                    name = "drag"
+                if name in self.STATES_INFO:
                     if self.drag_previous_state is None:
                         self.drag_previous_state = self.state
-                        info = self.STATES_INFO["drag"]
-                        self.state = State("drag", info["gif"], hold=info["hold"],
+                    if self.state.name != name:
+                        info = self.STATES_INFO[name]
+                        self.state = State(name, info["gif"], hold=info["hold"],
                                            movement_speed=info["movement_speed"],
                                            speed_animation=info["speed_animation"],
                                            direction=self.drag_direction if self.dragging else self.state.direction)

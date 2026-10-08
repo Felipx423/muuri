@@ -1693,6 +1693,18 @@
         }
     },
     "fefo": {
+        "physics": {
+            "gravity": 420,
+            "air_resistance": 2.2,
+            "vertical_resistance": 1.2,
+            "max_fall_speed": 180,
+            "bounce": 0.0,
+            "glide_factor": 0.45,
+            "launch_multiplier": 0.85,
+            "launch_lift": 180,
+            "airborne_animation": "fly",
+            "description": "Ligada: asas batendo, planar, queda lenta e arremesso leve. Desligada: o pet permanece onde você o soltar."
+        },
         "colors": [
             "green"
         ],
@@ -1704,7 +1716,8 @@
                 "run": "media/fefo/green_run_8fps.gif",
                 "swipe": "media/fefo/green_swipe_8fps.gif",
                 "lie": "media/fefo/green_lie_8fps.gif",
-                "drag": "media/fefo/green_drag_8fps.gif"
+                "drag": "media/fefo/green_drag_8fps.gif",
+                "fly": "media/fefo/green_fly_8fps.gif"
             }
         },
         "defaults": {
@@ -1739,6 +1752,11 @@
                 "speed_animation": 0.75
             },
             "drag": {
+                "hold": 0,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            },
+            "fly": {
                 "hold": 0,
                 "movement_speed": 0,
                 "speed_animation": 1.0
