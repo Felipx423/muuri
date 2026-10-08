@@ -113,11 +113,11 @@ class MainWindow(QtWidgets.QMainWindow):
                                 (QtGui.QPalette.ColorRole.HighlightedText, "#1257a6")):
                 palette.setColor(role, QtGui.QColor(color))
             app.setPalette(palette)
-            self.setWindowTitle("Muuri · DeskPets")
+            self.setWindowTitle("Muuri")
             self.resize(800, 600)
             self.setWindowIcon(QtGui.QIcon(LOGO_DIR))
             app.setWindowIcon(QtGui.QIcon(LOGO_DIR))
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(u"DeskPets")
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(u"Muuri")
 
             self.panel = SettingsPanel(self)
             self.setCentralWidget(self.panel)
@@ -144,7 +144,7 @@ class MainWindow(QtWidgets.QMainWindow):
             tray_menu.addSeparator()
             tray_menu.addAction(quit_action)
             self.tray_icon.setContextMenu(tray_menu)
-            self.tray_icon.setToolTip("Muuri · DeskPets")
+            self.tray_icon.setToolTip("Muuri")
             self.tray_icon.activated.connect(self.tray_activated)
             self.tray_icon.show()
 

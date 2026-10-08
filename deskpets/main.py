@@ -10,7 +10,7 @@ from .single_instance import SingleInstance
 
 def main():
     if platform.system() != "Windows":
-        print("DeskPets can only run on Windows.")
+        print("Muuri funciona apenas no Windows.")
         sys.exit(1)
 
     instance = SingleInstance()
@@ -18,6 +18,8 @@ def main():
         if not instance.acquire():
             return
         app = QtWidgets.QApplication(sys.argv)
+        app.setApplicationName("Muuri")
+        app.setApplicationDisplayName("Muuri")
         window = MainWindow(app)
         window.hide()
         window.start_refresh()

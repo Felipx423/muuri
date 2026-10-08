@@ -1,27 +1,41 @@
 # Muuri 🐮
 
-Uma vaquinha de desktop para Windows, baseada no [DeskPets](https://github.com/Jumitti/DeskPets).
-Mantém Python/PyQt e adiciona painel em português, arraste e física opcional.
+Uma vaquinha que vive no seu desktop.
 
-## Instalar
+<p><img src="deskpets/media/muuri/blue_idle_8fps.gif" alt="Muuri animada" width="160"></p>
 
-Baixe **Muuri-Setup.exe** na [página de versões](https://github.com/Felipx423/muuri/releases/latest),
-abra e conclua a instalação. Não precisa de Python nem VS Code.
-Para Windows 10/11 de 64 bits. O instalador 1.0.1 tem aproximadamente 31 MB.
-Ele cria atalhos no menu Iniciar e na área de trabalho; só uma instância abre por sessão.
-O aplicativo ainda não possui assinatura digital própria.
+Muuri é um desktop pet para Windows com animações, interação, arraste, física opcional e painel de configurações em português. É baseada no [DeskPets](https://github.com/Jumitti/DeskPets), mantendo Python/PyQt e os créditos da base original.
 
-## Usar
+## ✨ Recursos
 
-- Dê quatro cliques rápidos na Muuri para abrir as configurações.
-- Arraste com o mouse. Ative a física no painel para gravidade, arremesso e quique.
-- Ajuste pet, tamanho, velocidades e camada; clique em **Aplicar** para salvar.
-- Use o ícone da bandeja, perto do relógio, para abrir o painel ou sair.
-- Desinstale em **Configurações do Windows → Aplicativos**. As preferências ficam preservadas.
+- Passeios pelo desktop, animações de descanso e reações.
+- Arraste com o mouse e animação ao ser carregada.
+- Física opcional com gravidade, arremesso e quique.
+- Tamanhos e velocidades de movimento e animação independentes.
+- Painel em português, seleção de outros pets e ícone na bandeja do Windows.
+- Uma instância por sessão e preferências salvas entre execuções.
 
-![Painel da Muuri](img/muuri-painel.png)
+## 📦 Instalação
 
-## Executar pelo código
+1. Abra [Releases](https://github.com/Felipx423/muuri/releases/latest).
+2. Baixe **Muuri-Setup.exe**.
+3. Execute o instalador e conclua a instalação.
+4. Abra **Iniciar Muuri** pelo atalho ou pelo menu Iniciar.
+
+Para **Windows 10/11 de 64 bits**. Não precisa de Python nem VS Code. O aplicativo ainda não possui assinatura digital própria. Para remover, use **Configurações do Windows → Aplicativos**; as preferências ficam preservadas.
+
+## 🐮 Como usar
+
+- Dê **quatro cliques rápidos** na Muuri para abrir o painel.
+- Arraste com o mouse. Para gravidade e arremesso, marque **Ativar física** e clique em **Aplicar**.
+- Ajuste tamanho, cores, velocidades, pet e camada no painel. A prévia não altera o pet até aplicar.
+- Use o ícone na bandeja, perto do relógio, para abrir as configurações ou **Sair**.
+
+## 🖼️ Screenshots
+
+![Painel de configurações da Muuri](img/muuri-painel.png)
+
+## 🛠️ Executar pelo código
 
 No Windows, na raiz do projeto:
 
@@ -31,89 +45,27 @@ python -m venv .venv
 .\.venv\Scripts\python.exe run.py
 ```
 
-Para validar:
+## 🧪 Testes
+
+Com o ambiente virtual ativado:
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+python -m unittest discover -s tests -v
 ```
 
-Para compilar o instalador, consulte [packaging/README.md](packaging/README.md).
+Ou use diretamente `.\.venv\Scripts\python.exe` no lugar de `python`.
 
-## Créditos e licenças
+## 📦 Build
 
-Base **DeskPets**, de **Minniti Julien (Jumitti)**, sob licença MIT preservada em [LICENSE](LICENSE).
-O projeto original é inspirado em **vscode-pets**, de **tonybaloney**; os créditos das mídias originais continuam aplicáveis.
-Muuri foi adaptada a partir da referência visual fornecida pelo usuário.
-A distribuição executável inclui PyQt6 sob GPL v3, seu código-fonte e as licenças das bibliotecas.
-Os assets do código-fonte incluído ficam em `_internal/deskpets/media`; veja as instruções no ZIP.
+Consulte [packaging/README.md](packaging/README.md) para compilar o executável e o instalador. O launcher continua sendo `run.py`. O [histórico de desenvolvimento](MUURI_INTEGRATION.md) registra etapas intermediárias, não instruções atuais.
 
-<details>
-<summary>Documentação original do DeskPets</summary>
+## 📜 Créditos e licenças
 
-# DeskPets 🐶 🐿️
+- **DeskPets**, por **Minniti Julien (Jumitti)**: [repositório original](https://github.com/Jumitti/DeskPets). A licença MIT e seu aviso de copyright estão preservados em [LICENSE](LICENSE).
+- **vscode-pets**, por **tonybaloney**: [projeto de inspiração da base](https://github.com/tonybaloney/vscode-pets). Os créditos e condições aplicáveis aos assets herdados continuam válidos.
+- **Muuri**: design de referência fornecido pelo usuário; animações adaptadas para esta integração.
+- **PyQt6**: a distribuição executável usa GPL v3 e inclui a licença, os fontes da aplicação e os assets necessários. As licenças das demais bibliotecas acompanham o instalador em `_internal/THIRD_PARTY_LICENSES`.
 
-Desktop pets for Windows. Directly and explicitly inspired by 
-[**vscode-pets**](https://github.com/tonybaloney/vscode-pets)
-by [**tonybaloney**](https://github.com/tonybaloney). 
-This project adopts the same core idea, small pixel creatures living on your workspace.
+O ZIP de fonte incluído no instalador reutiliza os assets de `_internal/deskpets/media`. Após extrair o fonte, copie essa pasta para `deskpets/media` antes de compilar; o ZIP autônomo disponível nas versões já inclui os assets.
 
-![screenshot](img/display.png)
-
-## Installation (Windows only)
-
-### Option 1 — Python 
-
-```bash
-pip install deskpets
-```
-
-And to run, in CMD.exe (according to have python in your PATH):
-
-```bash
-deskpets
-```
-
-### Option 2 — Executable
-
-Download the `DeskPets.zip` from the [**Release**](https://github.com/Jumitti/DeskPets/releases) section, extract it, and run `DeskPets.exe`.
-
-## Usage
-
-Launching the application spawns one or more pets in the bottom-left corner of the screen.
-
-Current behavior:
-
-* Unlimited number of pets
-* Some species support multiple color variations
-* Per-species size control
-* Position automatically adapts to the taskbar
-* Simple interaction: some pets sit when the cursor gets close
-
-## Settings
-
-![screenshot](img/settings.png)
-
-![screenshot](img/pets.png)
-
-![screenshot](img/size.png)
-
-![screenshot](img/bigger.png)
-
-## Missing Features
-
-* Bunny, cat, frog (assets not licensed yet)
-* Background system
-* Ball play mechanic
-
-## Version
-
-[CHANGELOG](CHANGELOG.md)
-
-## Credits
-
-This project is inspired by [**vscode-pets**](https://github.com/tonybaloney/vscode-pets)
-by [**tonybaloney**](https://github.com/tonybaloney).
-
-All media used in this project originates from that repository, and the original credits provided there apply here as well.
-
-</details>
+O pacote interno `deskpets`, o identificador do instalador, o mutex de instância única e a pasta instalada `MuuriDeskPets` permanecem por compatibilidade. Isso preserva imports, atualizações, preferências e a proteção contra instâncias duplicadas.

@@ -3,3 +3,17 @@ deskpets/__pycache__/
 __pycache__/
 *.egg-info/
 .venv/
+# Local development files
+.idea/
+.vscode/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.tmp
+*.log
+*~

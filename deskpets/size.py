@@ -202,7 +202,7 @@ class SizeSettings(QtWidgets.QWidget):
     def __init__(self, main_window):
         try:
             super().__init__()
-            self.setWindowTitle("Settings")
+            self.setWindowTitle("Muuri — Tamanho")
             self.setWindowIcon(QtGui.QIcon("logo.ico"))
             self.resize(900, 600)
 

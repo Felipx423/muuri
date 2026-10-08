@@ -3,8 +3,7 @@
 [Setup]
 AppId={{C02D0CAB-3415-4D1B-AC62-65A50BD751D1}
 AppName=Muuri
-AppVersion=1.0.1
-AppPublisher=Muuri - baseado em DeskPets (Jumitti)
+AppVersion=1.0.2
 DefaultDirName={localappdata}\Programs\MuuriDeskPets
 DefaultGroupName=Muuri
 PrivilegesRequired=lowest

@@ -8,7 +8,7 @@ class BrowserWindow(QtWidgets.QMainWindow):
     def __init__(self):
         try:
             super().__init__()
-            self.setWindowTitle("DeskPets GitHub")
+            self.setWindowTitle("Muuri — Créditos do DeskPets")
             self.resize(1024, 768)
 
             self.browser = QWebEngineView()

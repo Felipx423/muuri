@@ -1,11 +1,12 @@
-# Registro histórico da integração
+# Histórico de desenvolvimento da Muuri
 
-Este documento registra as etapas e verificações durante o desenvolvimento.
-As instruções atuais de uso e instalação estão no README.md.
-As menções a pendências, ausência de commit ou versões antigas abaixo descrevem
-o momento de cada etapa, e não o estado atual do repositório.
+> Este documento é um histórico técnico de etapas intermediárias, incluindo
+> alternativas descartadas. Não é a documentação principal. Para instalação e
+> uso atual, consulte [README.md](README.md).
+> As pendências, versões e menções a ausência de commit abaixo descrevem o
+> momento de cada marco; não representam necessariamente o estado atual.
 
-# Muuri: integração de trabalho
+## Marco inicial: integração de trabalho
 
 Branch: `feat/muuri-pet`. Origem: https://github.com/Jumitti/DeskPets,
 commit `d1d00fc137c9494bb2de0cc660cd5915b1be0034`.

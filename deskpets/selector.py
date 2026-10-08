@@ -250,7 +250,7 @@ class PetSelector(QtWidgets.QWidget):
     def __init__(self, main_window):
         try:
             super().__init__()
-            self.setWindowTitle("Pet Selector")
+            self.setWindowTitle("Muuri — Pets")
             self.setWindowIcon(QtGui.QIcon("logo.ico"))
             self.resize(900, 600)
 

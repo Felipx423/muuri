@@ -69,7 +69,7 @@ class LayerSelector(QtWidgets.QWidget):
 class Settings(QtWidgets.QWidget):
     def __init__(self, main_window):
         super().__init__()
-        self.setWindowTitle("Settings")
+        self.setWindowTitle("Muuri — Preferências")
         self.setWindowIcon(QtGui.QIcon("logo.ico"))
         self.resize(900, 600)
 

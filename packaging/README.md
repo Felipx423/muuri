@@ -27,3 +27,19 @@ _internal/deskpets/media, evitando duplicá-los dentro do ZIP. Após extrair o
 fonte, copie essa pasta para deskpets/media antes de compilar. O ZIP autônomo
 em outputs inclui também todos os assets e screenshots originais. Todas as
 espécies, licenças e código Python são preservados. A compressão é LZMA2/ultra64.
+
+
+## Identidade e compatibilidade
+
+O candidato de polish usa a versão 1.0.2, nome Muuri, executável Muuri.exe,
+instalador Muuri-Setup.exe e o ícone próprio existente. Nenhum publisher foi
+inventado: o campo AppPublisher foi omitido. Os créditos continuam no guia,
+no painel e na licença original. A versão 1.0.1 publicada não é substituída
+automaticamente por uma compilação local.
+
+O AppId do Inno Setup e DefaultDirName MuuriDeskPets são mantidos para atualizar
+a instalação anterior sem criar outra entrada. O mutex PetlayerDeskPetsMuuri
+é mantido para detectar também versões anteriores abertas. O pacote Python
+deskpets e seu entry point original continuam compatíveis; esses nomes não
+são a identidade visível do aplicativo. O AppUserModelID visível ao Windows
+passa a Muuri; a integração com a barra de tarefas pode formar um novo grupo.

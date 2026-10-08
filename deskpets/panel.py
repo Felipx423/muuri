@@ -147,7 +147,7 @@ class SettingsPanel(QtWidgets.QWidget):
         outer = QtWidgets.QVBoxLayout(self)
         outer.setContentsMargins(24, 18, 24, 18)
         outer.setSpacing(12)
-        outer.addWidget(label("Muuri · DeskPets", "brand"))
+        outer.addWidget(label("Muuri", "brand"))
         outer.addWidget(label("Selecione um pet na lista e clique em Aplicar para trocar seu companheiro.", "muted"))
         self.tabs = QtWidgets.QTabWidget()
         outer.addWidget(self.tabs, 1)
