@@ -1691,5 +1691,58 @@
                 "speed_animation": 1.0
             }
         }
+    },
+    "fefo": {
+        "colors": [
+            "green"
+        ],
+        "states": {
+            "green": {
+                "idle": "media/fefo/green_idle_8fps.gif",
+                "walk": "media/fefo/green_walk_8fps.gif",
+                "walk_fast": "media/fefo/green_walk_fast_8fps.gif",
+                "run": "media/fefo/green_run_8fps.gif",
+                "swipe": "media/fefo/green_swipe_8fps.gif",
+                "lie": "media/fefo/green_lie_8fps.gif",
+                "drag": "media/fefo/green_drag_8fps.gif"
+            }
+        },
+        "defaults": {
+            "idle": {
+                "hold": 16,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            },
+            "walk": {
+                "hold": 32,
+                "movement_speed": 2,
+                "speed_animation": 1.0
+            },
+            "walk_fast": {
+                "hold": 24,
+                "movement_speed": 4,
+                "speed_animation": 1.25
+            },
+            "run": {
+                "hold": 16,
+                "movement_speed": 6,
+                "speed_animation": 1.5
+            },
+            "swipe": {
+                "hold": 8,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            },
+            "lie": {
+                "hold": 24,
+                "movement_speed": 0,
+                "speed_animation": 0.75
+            },
+            "drag": {
+                "hold": 0,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            }
+        }
     }
 }

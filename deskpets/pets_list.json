@@ -177,6 +177,19 @@
             "movement_multiplier": 1.19,
             "animation_multiplier": 1.31,
             "physics_enabled": true
+        },
+        {
+            "species": "fefo",
+            "colors": [
+                "green"
+            ],
+            "enabled": false,
+            "size": "Original",
+            "draggable": true,
+            "settings_clicks": 4,
+            "movement_multiplier": 1.0,
+            "animation_multiplier": 1.0,
+            "physics_enabled": false
         }
     ]
 }
