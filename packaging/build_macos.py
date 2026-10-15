@@ -100,7 +100,7 @@ def verify(app):
     if not info.get('LSUIElement') or info['LSMinimumSystemVersion'] != '13.0':
         raise RuntimeError('Metadados do aplicativo incorretos')
     executable = app/'Contents/MacOS/Muuri'
-    subprocess.run(['lipo','-verify_arch','arm64',str(executable)],check=True)
+    subprocess.run(['lipo',str(executable),'-verify_arch','arm64'],check=True)
     subprocess.run(['codesign','--verify','--deep','--strict',str(app)],check=True)
     resource = app/'Contents/Resources'
     for relative in ('LICENSE','THIRD_PARTY_LICENSES','Muuri-codigo-fonte.zip','deskpets/pets_data.json'):
@@ -119,7 +119,7 @@ def verify(app):
             magic = handle.read(4)
         if magic not in (b'\xcf\xfa\xed\xfe',b'\xfe\xed\xfa\xcf',b'\xca\xfe\xba\xbe',b'\xbe\xba\xfe\xca'):
             continue
-        subprocess.run(['lipo','-verify_arch','arm64',str(path)],check=True,capture_output=True)
+        subprocess.run(['lipo',str(path),'-verify_arch','arm64'],check=True,capture_output=True)
         loads = subprocess.check_output(['otool','-l',str(path)],text=True)
         versions = re.findall(r'\bminos\s+(\d+\.\d+(?:\.\d+)?)',loads)
         versions += re.findall(r'cmd LC_VERSION_MIN_MACOSX\s+cmdsize \d+\s+version (\d+\.\d+(?:\.\d+)?)',loads)
