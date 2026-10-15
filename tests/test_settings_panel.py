@@ -386,9 +386,9 @@ class PanelTests(unittest.TestCase):
                 other.shutdown()
                 other.deleteLater()
 
-    def test_quantity_accepts_large_integers_and_rejects_empty_or_zero(self):
+    def test_quantity_accepts_large_integers_and_rejects_invalid_text(self):
         before = self.list_path.read_bytes()
-        for text in ("", "0", "-1", "1.5"):
+        for text in ("", "-1", "1.5"):
             self.panel.quantity.setText(text)
             self.assertFalse(self.panel.apply())
             self.assertEqual(self.list_path.read_bytes(), before)
@@ -398,6 +398,56 @@ class PanelTests(unittest.TestCase):
         self.panel.discard()
         self.assertEqual(self.panel.quantity.text(), "1")
         self.assertFalse(self.panel.is_dirty())
+
+    def test_remove_copies_species_and_all_pets_then_add_again(self):
+        from collections import Counter
+        with patch.object(petworker.PetWorker, 'run', lambda worker: None):
+            def apply():
+                self.assertTrue(self.panel.apply())
+                self.window.worker.stop()
+                self.assertTrue(self.window.worker.wait(3000))
+
+            self.panel.select('manu')
+            self.panel.activate_selected()
+            self.panel.quantity.setText('2')
+            apply()
+            before = self.list_path.read_bytes()
+            self.panel.remove_one_button.click()
+            self.assertEqual(self.list_path.read_bytes(), before)
+            apply()
+            self.assertEqual(Counter(p.species for p in self.window.pets), {'muuri':1,'manu':1})
+            self.panel.remove_one_button.click()
+            self.assertEqual(self.panel.quantity.text(), '0')
+            self.assertFalse(self.panel.enabled.isChecked())
+            apply()
+            self.assertEqual([p.species for p in self.window.pets], ['muuri'])
+            self.panel.activate_selected()
+            self.assertEqual(self.panel.quantity.text(), '1')
+            apply()
+            self.panel.remove_species_button.click()
+            apply()
+            self.assertEqual([p.species for p in self.window.pets], ['muuri'])
+            self.panel.quantity.setText('2')
+            self.assertTrue(self.panel.enabled.isChecked())
+            apply()
+            self.panel.remove_all_button.click()
+            self.assertTrue(self.window.pets)
+            apply()
+            self.assertEqual(self.window.pets, [])
+            self.assertTrue(self.window.tray_icon.isVisible())
+            other = MainWindow(self.app)
+            try:
+                self.assertTrue(other.start_refresh())
+                other.worker.stop()
+                self.assertTrue(other.worker.wait(3000))
+                self.assertEqual(other.pets, [])
+            finally:
+                other.shutdown()
+                other.deleteLater()
+            self.panel.select('manu')
+            self.panel.activate_selected()
+            apply()
+            self.assertEqual(Counter(p.species for p in self.window.pets), {'manu':2})
 
     def test_enabled_pet_requires_color(self):
         self.panel.color_checks["blue"].setChecked(False)

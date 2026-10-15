@@ -11,6 +11,8 @@ Clique em Aplicar para salvar. A bandeja, perto do relógio, tem a opção Sair.
 Só uma instância abre por sessão, mesmo clicando várias vezes no atalho.
 Ative várias espécies no painel e ajuste Quantidade para criar cópias.
 Os cartões preservam os demais pets ativos; Aplicar confirma as mudanças.
+Use Remover 1, Remover espécie ou Remover todos os pets e clique em Aplicar.
+Quantidade zero também remove a espécie da área de trabalho.
 Muuri, Fefo, Cato e Manu ficam disponíveis, além dos pets originais.
 
 REMOVER

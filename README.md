@@ -33,6 +33,7 @@ Para **macOS Apple Silicon (M1 ou posterior)**, baixe o DMG na [prévia para Mac
 - Arraste com o mouse. Para gravidade e arremesso, marque **Ativar física** e clique em **Aplicar**.
 - Ajuste tamanho, cores, velocidades, pet e camada no painel. A prévia não altera o pet até aplicar.
 - Para manter vários pets juntos, clique nos cartões desejados e ajuste **Quantidade** para criar cópias. Cada cartão mantém os demais ativos. Para remover uma espécie, desmarque **Mostrar na área de trabalho** nela. Confirme em **Aplicar**.
+- Para remover cópias, use **Remover 1** ou diminua **Quantidade**. **Remover espécie** e quantidade **zero** retiram todas as cópias dessa espécie. **Remover todos os pets** limpa a tela. Confirme em **Aplicar**; o ícone da bandeja continua disponível.
 - Use o ícone na bandeja, perto do relógio, para abrir as configurações ou **Sair**.
 
 ## 🖼️ Screenshots

@@ -272,11 +272,17 @@ class SettingsPanel(QtWidgets.QWidget):
         quantity_row.addWidget(label("Quantidade"))
         self.quantity = QtWidgets.QLineEdit("1")
         self.quantity.setAccessibleName("Quantidade de pets por cor")
-        self.quantity.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[1-9][0-9]*")))
+        self.quantity.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("0|[1-9][0-9]*")))
         self.quantity.setMaximumWidth(100)
-        self.quantity.setToolTip("Cópias desta espécie para cada cor marcada. Digite um número inteiro positivo.")
+        self.quantity.setToolTip("Cópias desta espécie para cada cor marcada. Zero remove a espécie ao aplicar.")
         quantity_row.addWidget(self.quantity)
         form.addLayout(quantity_row)
+        removal_row = QtWidgets.QHBoxLayout()
+        self.remove_one_button = QtWidgets.QPushButton("Remover 1")
+        self.remove_species_button = QtWidgets.QPushButton("Remover espécie")
+        removal_row.addWidget(self.remove_one_button)
+        removal_row.addWidget(self.remove_species_button)
+        form.addLayout(removal_row)
         form.addWidget(label("CORES", "eyebrow"))
         self.colors_box = QtWidgets.QWidget()
         self.colors_layout = QtWidgets.QGridLayout(self.colors_box)
@@ -395,6 +401,8 @@ class SettingsPanel(QtWidgets.QWidget):
         footer = QtWidgets.QHBoxLayout()
         self.status = label("", "muted")
         footer.addWidget(self.status, 1)
+        self.remove_all_button = QtWidgets.QPushButton("Remover todos os pets")
+        footer.addWidget(self.remove_all_button)
         self.discard_button = QtWidgets.QPushButton("Descartar alterações")
         self.apply_button = QtWidgets.QPushButton("Aplicar")
         self.apply_button.setObjectName("primary")
@@ -416,6 +424,9 @@ class SettingsPanel(QtWidgets.QWidget):
         self.species_list.itemClicked.connect(self.activate_selected)
         self.discard_button.clicked.connect(self.discard)
         self.apply_button.clicked.connect(self.apply)
+        self.remove_one_button.clicked.connect(self.remove_one)
+        self.remove_species_button.clicked.connect(lambda: self.quantity.setText("0"))
+        self.remove_all_button.clicked.connect(self.remove_all)
         self.loading = False
         self.select("muuri")
 
@@ -468,12 +479,23 @@ class SettingsPanel(QtWidgets.QWidget):
         if self.loading:
             return
         self.loading = True
+        if self.quantity.text() == "0":
+            self.quantity.setText("1")
         self.enabled.setChecked(True)
         if not any(check.isChecked() for check in self.color_checks.values()):
             color = self.preview_color.currentData()
             self.color_checks[color].setChecked(True)
         self.loading = False
         self.changed()
+
+    def remove_one(self):
+        if self.quantity.hasAcceptableInput():
+            self.quantity.setText(str(max(0, int(self.quantity.text())-1)))
+
+    def remove_all(self):
+        for entry in self.draft['pets']:
+            entry['enabled'] = False
+        self.select_species(self.species_list.currentItem())
 
     def select_species(self, current, previous=None):
         if current is None:
@@ -551,7 +573,17 @@ class SettingsPanel(QtWidgets.QWidget):
             return
         entry = copy.deepcopy(self.entry())
         if self.quantity.hasAcceptableInput():
-            entry["count"] = int(self.quantity.text())
+            count = int(self.quantity.text())
+            self.loading = True
+            if self.sender() is self.enabled and self.enabled.isChecked() and count == 0:
+                count = 1
+                self.quantity.setText("1")
+            elif count == 0:
+                self.enabled.setChecked(False)
+            elif self.sender() is self.quantity and entry.get('count', 1) == 0:
+                self.enabled.setChecked(True)
+            self.loading = False
+            entry["count"] = count
         entry.update(enabled=self.enabled.isChecked(), colors=[c for c, w in self.color_checks.items() if w.isChecked()],
                      size=self.size.currentData(), draggable=self.draggable.isChecked(),
                      physics_enabled=self.physics.isChecked(),
@@ -576,6 +608,10 @@ class SettingsPanel(QtWidgets.QWidget):
 
     def update_status(self):
         dirty = self.is_dirty()
+        active = self.enabled.isChecked() and self.quantity.hasAcceptableInput() and int(self.quantity.text()) > 0
+        self.remove_one_button.setEnabled(active)
+        self.remove_species_button.setEnabled(active)
+        self.remove_all_button.setEnabled(any(entry.get('enabled', True) for entry in self.draft['pets']))
         self.apply_button.setEnabled(dirty)
         self.discard_button.setEnabled(dirty)
         self.status.setText("Alterações pendentes · confirme em Aplicar" if dirty else "Tudo salvo · do seu jeito")
@@ -590,7 +626,7 @@ class SettingsPanel(QtWidgets.QWidget):
 
     def apply(self):
         if not self.quantity.hasAcceptableInput():
-            self.status.setText("Informe uma quantidade inteira maior que zero.")
+            self.status.setText("Informe uma quantidade inteira a partir de zero.")
             self.quantity.setFocus()
             return False
         if not self.is_dirty():
