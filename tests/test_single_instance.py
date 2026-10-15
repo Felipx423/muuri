@@ -1,7 +1,9 @@
 import subprocess
 import sys
+import tempfile
 import unittest
 import uuid
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from deskpets.single_instance import SingleInstance
@@ -28,7 +30,7 @@ class SingleInstanceTests(unittest.TestCase):
         self.assertEqual(self.probe(), "True")
         lock.close()
 
-    def test_windows_releases_lock_after_forced_exit(self):
+    def test_os_releases_lock_after_forced_exit(self):
         code = ("import time; from deskpets.single_instance import SingleInstance; "
                 f"lock=SingleInstance({self.name!r}); "
                 "print(lock.acquire(), flush=True); time.sleep(30)")
@@ -41,6 +43,25 @@ class SingleInstanceTests(unittest.TestCase):
             proc.wait(timeout=5)
             proc.stdout.close()
         self.assertEqual(self.probe(), "True")
+
+    def test_portable_file_lock_duplicate_and_recovery(self):
+        from deskpets import single_instance,config_io
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(single_instance,'sys',SimpleNamespace(platform='darwin')), \
+                patch.object(config_io,'configuration_dir',return_value=Path(folder)):
+            first,second = SingleInstance(self.name),SingleInstance(self.name)
+            try:
+                self.assertTrue(first.acquire())
+                self.assertFalse(second.acquire())
+                second.close()
+            finally:
+                first.close()
+            third = SingleInstance(self.name)
+            try:
+                self.assertTrue(third.acquire())
+            finally:
+                third.close()
 
     def test_duplicate_returns_before_creating_windows(self):
         from deskpets import main

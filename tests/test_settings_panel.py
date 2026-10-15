@@ -3,6 +3,10 @@ import json
 import tempfile
 import time
 import unittest
+import sys
+
+if sys.platform != 'win32':
+    raise unittest.SkipTest('Win32 native events; Qt backend has separate portable tests')
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -254,7 +258,7 @@ class PanelTests(unittest.TestCase):
         self.assertGreater(pet.y, 100)
         self.assertEqual(win32gui.GetWindowRect(pet.hwnd)[:2], (int(pet.x), int(pet.y)))
 
-    def test_select_and_apply_replaces_pet_and_supplies_default_color(self):
+    def test_select_and_apply_adds_pet_and_supplies_default_color(self):
         before = self.list_path.read_bytes()
         old_pet = self.pet()
         for index in range(self.panel.species_list.count()):
@@ -269,9 +273,9 @@ class PanelTests(unittest.TestCase):
         self.assertTrue(self.panel.apply())
         self.window.worker.stop()
         self.window.worker.wait(3000)
-        self.assertEqual({p.species for p in self.window.pets}, {"clippy"})
+        self.assertEqual({p.species for p in self.window.pets}, {"muuri", "clippy"})
         saved = config_io.read_json(self.list_path)
-        self.assertEqual([e["species"] for e in saved["pets"] if e.get("enabled")], ["clippy"])
+        self.assertEqual({e["species"] for e in saved["pets"] if e.get("enabled")}, {"muuri", "clippy"})
         muuri = next(e for e in saved["pets"] if e["species"] == "muuri")
         self.assertEqual(muuri["size"], "Original")
         self.assertEqual(muuri["settings_clicks"], 4)
@@ -289,7 +293,7 @@ class PanelTests(unittest.TestCase):
         self.assertTrue(self.panel.apply())
         self.window.worker.stop()
         self.window.worker.wait(3000)
-        self.assertEqual({p.species for p in self.window.pets}, {"dog"})
+        self.assertEqual({p.species for p in self.window.pets}, {"muuri", "dog"})
 
     def test_save_failure_retains_draft_and_live_pet(self):
         before = self.list_path.read_bytes()
@@ -303,6 +307,76 @@ class PanelTests(unittest.TestCase):
         self.assertIs(self.pet(), pet)
         self.assertTrue(self.panel.is_dirty())
         self.assertIn("Não foi possível", self.panel.status.text())
+
+    def test_multiple_species_copies_positions_removal_and_restart(self):
+        from collections import Counter
+        before = self.list_path.read_bytes()
+        with patch.object(petworker.PetWorker, "run", lambda worker: None):
+            for species, count in (("cato", 2), ("manu", 2), ("fefo", 1)):
+                self.panel.select(species)
+                self.panel.activate_selected()
+                self.panel.quantity.setText(str(count))
+            self.assertEqual(len(self.window.pets), 1)
+            self.assertEqual(self.list_path.read_bytes(), before)
+            old_worker = self.window.worker
+            self.assertTrue(self.panel.apply())
+            self.window.worker.stop()
+            self.assertTrue(self.window.worker.wait(3000))
+            self.assertFalse(old_worker.isRunning())
+            self.assertEqual(Counter(p.species for p in self.window.pets),
+                             {"muuri": 1, "cato": 2, "manu": 2, "fefo": 1})
+            self.assertEqual(len({p.hwnd for p in self.window.pets}), 6)
+            self.assertEqual(len({(p.x,p.y) for p in self.window.pets}), 6)
+            positions = {}
+            for index, pet in enumerate(self.window.pets):
+                pet.x, pet.y, pet.y_def = 100+index*140, 100+index*10, 100+index*10
+                pet.state.direction = 1 if index%2 else -1
+                key = pet.species, pet.color, pet.instance_index
+                positions[key] = pet.x, pet.y, pet.state.direction
+            self.panel.select("cato")
+            self.panel.quantity.setText("3")
+            old_worker = self.window.worker
+            self.assertTrue(self.panel.apply())
+            self.window.worker.stop()
+            self.assertTrue(self.window.worker.wait(3000))
+            self.assertFalse(old_worker.isRunning())
+            self.assertEqual(len(self.window.pets), 7)
+            for pet in self.window.pets:
+                key = pet.species, pet.color, pet.instance_index
+                if key in positions:
+                    self.assertEqual((pet.x,pet.y,pet.state.direction), positions[key])
+            self.panel.enabled.setChecked(False)
+            self.assertTrue(self.panel.apply())
+            self.window.worker.stop()
+            self.assertTrue(self.window.worker.wait(3000))
+            self.assertEqual(Counter(p.species for p in self.window.pets),
+                             {"muuri": 1, "manu": 2, "fefo": 1})
+            other = MainWindow(self.app)
+            try:
+                self.assertTrue(other.start_refresh())
+                other.worker.stop()
+                self.assertTrue(other.worker.wait(3000))
+                self.assertEqual(Counter(p.species for p in other.pets),
+                                 {"muuri": 1, "manu": 2, "fefo": 1})
+                other.panel.select("cato")
+                self.assertEqual(other.panel.quantity.text(), "3")
+                self.assertFalse(other.panel.enabled.isChecked())
+            finally:
+                other.shutdown()
+                other.deleteLater()
+
+    def test_quantity_accepts_large_integers_and_rejects_empty_or_zero(self):
+        before = self.list_path.read_bytes()
+        for text in ("", "0", "-1", "1.5"):
+            self.panel.quantity.setText(text)
+            self.assertFalse(self.panel.apply())
+            self.assertEqual(self.list_path.read_bytes(), before)
+        self.panel.quantity.setText("12345678901234567890")
+        self.assertTrue(self.panel.quantity.hasAcceptableInput())
+        self.assertEqual(self.panel.entry()["count"], 12345678901234567890)
+        self.panel.discard()
+        self.assertEqual(self.panel.quantity.text(), "1")
+        self.assertFalse(self.panel.is_dirty())
 
     def test_enabled_pet_requires_color(self):
         self.panel.color_checks["blue"].setChecked(False)

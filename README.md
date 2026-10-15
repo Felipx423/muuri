@@ -13,6 +13,7 @@ Muuri é um desktop pet para Windows com animações, interação, arraste, fís
 - Física opcional com gravidade, arremesso e quique.
 - Tamanhos e velocidades de movimento e animação independentes.
 - Painel em português, seleção de outros pets e ícone na bandeja do Windows.
+- Várias espécies ao mesmo tempo e quantidade de cópias por espécie/cor, sem teto fixo de pets no engine.
 - Uma instância por sessão e preferências salvas entre execuções.
 
 ## 📦 Instalação
@@ -24,11 +25,14 @@ Muuri é um desktop pet para Windows com animações, interação, arraste, fís
 
 Para **Windows 10/11 de 64 bits**. Não precisa de Python nem VS Code. O aplicativo ainda não possui assinatura digital própria. Para remover, use **Configurações do Windows → Aplicativos**; as preferências ficam preservadas.
 
+O suporte experimental a **macOS Apple Silicon** está em desenvolvimento nesta branch. Consulte [packaging/MACOS.md](packaging/MACOS.md) para executar pelo código ou gerar o `.app` em um Mac. O instalador Windows da release atual continua separado.
+
 ## 🐮 Como usar
 
 - Dê **quatro cliques rápidos** na Muuri para abrir o painel.
 - Arraste com o mouse. Para gravidade e arremesso, marque **Ativar física** e clique em **Aplicar**.
 - Ajuste tamanho, cores, velocidades, pet e camada no painel. A prévia não altera o pet até aplicar.
+- Para manter vários pets juntos, clique nos cartões desejados e ajuste **Quantidade** para criar cópias. Cada cartão mantém os demais ativos. Para remover uma espécie, desmarque **Mostrar na área de trabalho** nela. Confirme em **Aplicar**.
 - Use o ícone na bandeja, perto do relógio, para abrir as configurações ou **Sair**.
 
 ## 🖼️ Screenshots
@@ -54,6 +58,8 @@ python -m unittest discover -s tests -v
 ```
 
 Ou use diretamente `.\.venv\Scripts\python.exe` no lugar de `python`.
+
+Para executar os testes com preferências temporárias, sem depender das velocidades e pets configurados localmente, use `python packaging/run_tests.py`. No macOS, os testes Win32 ficam pulados e os testes Qt/Cocoa cobrem a integração da plataforma.
 
 ## 📦 Build
 

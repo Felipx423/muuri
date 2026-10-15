@@ -9,8 +9,8 @@ from .single_instance import SingleInstance
 
 
 def main():
-    if platform.system() != "Windows":
-        print("Muuri funciona apenas no Windows.")
+    if platform.system() not in ("Windows", "Darwin"):
+        print("Muuri funciona no Windows e no macOS.")
         sys.exit(1)
 
     instance = SingleInstance()
@@ -22,10 +22,12 @@ def main():
         app.setApplicationDisplayName("Muuri")
         window = MainWindow(app)
         window.hide()
-        window.start_refresh()
+        if not window.start_refresh():
+            raise RuntimeError("Não foi possível iniciar os pets.")
         sys.exit(app.exec())
     except Exception as e:
         print(e)
         traceback.print_exc()
+        sys.exit(1)
     finally:
         instance.close()

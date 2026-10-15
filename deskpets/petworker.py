@@ -6,12 +6,12 @@ import traceback
 
 from PIL import Image
 from PyQt6 import QtCore
-import win32gui
 
 from .pets import Pet
-from .windows_API import Windows
+from .desktop import Desktop
+from . import config_io
 
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "pets_list.json")
+CONFIG_FILE = str(config_io.LIST_FILE)
 FPS_DEFAULT = 8
 SIZE_DEFAULT = "small"
 
@@ -52,21 +52,30 @@ def load_pets():
                 value = entry.get(key, 1.0)
                 if not isinstance(value, (int, float)) or not math.isfinite(value) or not 0.5 <= value <= 2:
                     raise ValueError(f"Multiplicador inválido: {species} / {key}")
+            count = entry.get("count", 1)
+            if isinstance(count, bool) or not isinstance(count, int) or count < 1:
+                raise ValueError(f"Quantidade inválida: {species}")
             for color in entry.get("colors", []):
-                pet = Pet(species, color, fps, size, draggable=entry.get("draggable", False),
-                          settings_clicks=entry.get("settings_clicks", 0),
-                          movement_multiplier=entry.get("movement_multiplier", 1.0),
-                          animation_multiplier=entry.get("animation_multiplier", 1.0),
-                          physics_enabled=entry.get("physics_enabled", False))
-                pet.main_window = None
-                pets.append(pet)
+                for instance_index in range(count):
+                    pet = Pet(species, color, fps, size, draggable=entry.get("draggable", False),
+                              settings_clicks=entry.get("settings_clicks", 0),
+                              movement_multiplier=entry.get("movement_multiplier", 1.0),
+                              animation_multiplier=entry.get("animation_multiplier", 1.0),
+                              physics_enabled=entry.get("physics_enabled", False))
+                    pet.main_window = None
+                    pet.instance_index = instance_index
+                    pets.append(pet)
+        if len(pets) > 1:
+            offset = 0
+            for pet in pets:
+                span = max(1, pet.screen_width - pet.width + 1)
+                pet.x = (pet.screen_width - pet.width - offset) % span
+                pet.free_roam = True
+                offset += pet.width + 16
         return pets
     except Exception as e:
         for pet in locals().get("pets", []):
-            Windows.end_drag(pet)
-            win32gui.DestroyWindow(pet.hwnd)
-            pet.hwnd = None
-            pet.drag_window_proc = None
+            Desktop.close(pet)
         print(e)
         traceback.print_exc()
         raise

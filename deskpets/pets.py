@@ -12,7 +12,7 @@ from .squirrel_climb import squirrel_climb, go_climb
 from .state import State
 from .clicks import ClickSequence
 from .physics import Motion
-from .windows_API import POINT, Windows
+from .desktop import Desktop
 
 # Configuration
 BASE_DIR = os.path.dirname(__file__)
@@ -21,10 +21,6 @@ JSON_FILE = os.path.join(BASE_DIR, "pets_data.json")
 # JSON
 with open(JSON_FILE, "r", encoding="utf-8") as f:
     PETS_DATA = json.load(f)
-
-# Windows API setup
-user32 = ctypes.windll.user32
-
 
 # Pet window
 class Pet:
@@ -55,8 +51,7 @@ class Pet:
             self.drag_direction = 1
             self.drag_previous_state = None
             self.free_roam = False
-            self.screen_width = user32.GetSystemMetrics(0)
-            self.screen_height = user32.GetSystemMetrics(1)
+            self.screen_width, self.screen_height = Desktop.screen_size()
 
             species_data = PETS_DATA[species]
             defaults = species_data.get("defaults", {})
@@ -74,7 +69,7 @@ class Pet:
                 exception=["with_ball", "wallclimb", "walldig", "wallgrab", "wallnap", "fall_from_grab"])
             self.frame_animation()
 
-            self.taskbar_height, self.taskbar_autohide, self.taskbar_edge = Windows.taskbar_settings()
+            self.taskbar_height, self.taskbar_autohide, self.taskbar_edge = Desktop.taskbar_settings()
             if self.taskbar_autohide or self.taskbar_edge != 3:
                 self.y_def = self.screen_height - self.height
                 self.y = self.screen_height - self.height
@@ -84,10 +79,10 @@ class Pet:
             self.x = self.screen_width - self.width
             self.floor_y = self.y_def
 
-            self.hwnd = Windows.hwnd(self.x, self.y, self.width, self.height,
+            self.hwnd = Desktop.hwnd(self.x, self.y, self.width, self.height,
                                      draggable or settings_clicks)
             if draggable or settings_clicks:
-                Windows.enable_drag(self)
+                Desktop.enable_drag(self)
 
             self.immunity = False
             self.lie_duration = 24
@@ -170,9 +165,7 @@ class Pet:
                 if time.monotonic() - self.click_sequence.started_at <= 1.5:
                     return
                 self.click_sequence.reset()
-            pt = POINT()
-            user32.GetCursorPos(ctypes.byref(pt))
-            mouse_x, mouse_y = pt.x, pt.y
+            mouse_x, mouse_y = Desktop.cursor_position()
 
             distance = ((self.x - mouse_x) ** 2 + (self.y - mouse_y) ** 2) ** 0.5
 

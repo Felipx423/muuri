@@ -6,91 +6,23 @@ import traceback
 from PyQt6 import QtWidgets, QtGui, QtCore
 
 from .petworker import PetWorker, load_pets
-from .remove_alpha import GifHelper
 from .panel import SettingsPanel
-from .windows_API import POINT, SIZE, BLENDFUNCTION, Windows, is_full_screen
-
-user32 = ctypes.windll.user32
-gdi32 = ctypes.windll.gdi32
+from .desktop import Desktop, IS_WINDOWS
+from . import config_io
 
 BASE_DIR = os.path.dirname(__file__)
 LOGO_DIR = os.path.join(BASE_DIR, "media", "muuri", "muuri.ico")
 
-ULW_ALPHA = 0x2
-
-STATE_FULLSCREEN = False
-
-
 def draw_pet_frame(pet, frame_image):
     try:
-        if getattr(pet, "hwnd", None):
-            hbitmap = GifHelper.pil_to_hbitmap(frame_image)
-            draw_frame(pet, hbitmap)
-            gdi32.DeleteObject(hbitmap)
-    except Exception as e:
-        print(e)
-        traceback.print_exc()
-
-
-def draw_frame(self, hbitmap):
-    global STATE_FULLSCREEN
-    try:
-        full_screen_now = is_full_screen()
-        if full_screen_now != STATE_FULLSCREEN:
-            STATE_FULLSCREEN = full_screen_now
-            if getattr(self, "main_window", None):
-                QtCore.QTimer.singleShot(0, self.main_window.start_refresh)
-                return
-
-        hdc_screen = user32.GetDC(None)
-        hdc_mem = gdi32.CreateCompatibleDC(hdc_screen)
-        gdi32.SelectObject(hdc_mem, hbitmap)
-
-        blend = BLENDFUNCTION()
-        blend.BlendOp = 0
-        blend.BlendFlags = 0
-        blend.SourceConstantAlpha = 255
-        blend.AlphaFormat = 1
-
-        pt_pos = POINT(int(self.x), int(self.y))
-        size = SIZE(self.width, self.height)
-        pt_src = POINT(0, 0)
-
-        user32.UpdateLayeredWindow(self.hwnd, hdc_screen, ctypes.byref(pt_pos),
-                                   ctypes.byref(size), hdc_mem, ctypes.byref(pt_src),
-                                   0, ctypes.byref(blend), ULW_ALPHA)
-
-        gdi32.DeleteDC(hdc_mem)
-        user32.ReleaseDC(None, hdc_screen)
-
+        Desktop.draw_pet_frame(pet, frame_image)
     except Exception as e:
         print(e)
         traceback.print_exc()
 
 
 def close(pet):
-    try:
-        if getattr(pet, "hbitmaps", None):
-            for hb in pet.hbitmaps:
-                try:
-                    gdi32.DeleteObject(hb)
-                except Exception:
-                    pass
-        pet.hbitmaps = []
-
-        if getattr(pet, "hwnd", None):
-            if pet.draggable or pet.settings_clicks:
-                Windows.end_drag(pet)
-            # Keep the mouse callback alive until native destruction finishes.
-            ctypes.windll.user32.DestroyWindow(pet.hwnd)
-            pet.hwnd = None
-            if pet.draggable or pet.settings_clicks:
-                pet.drag_window_proc = None
-
-        pet.current_frame = 0
-    except Exception as e:
-        print(e)
-        traceback.print_exc()
+    Desktop.close(pet)
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -99,6 +31,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, app):
         try:
             super().__init__()
+            config_io.initialize_configs()
             app.setStyle("Fusion")
             palette = QtGui.QPalette()
             for role, color in ((QtGui.QPalette.ColorRole.Window, "#f4f8fd"),
@@ -117,7 +50,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.resize(800, 600)
             self.setWindowIcon(QtGui.QIcon(LOGO_DIR))
             app.setWindowIcon(QtGui.QIcon(LOGO_DIR))
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(u"Muuri")
+            if IS_WINDOWS:
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(u"Muuri")
 
             self.panel = SettingsPanel(self)
             self.setCentralWidget(self.panel)
@@ -137,8 +71,15 @@ class MainWindow(QtWidgets.QMainWindow):
             quit_action = QtGui.QAction("Sair", self)
             show_action.triggered.connect(self.show_window)
             refresh_action.triggered.connect(self.start_refresh)
+            quit_action.setMenuRole(QtGui.QAction.MenuRole.QuitRole)
             quit_action.triggered.connect(self.request_quit)
-            tray_menu = QtWidgets.QMenu()
+            self.quit_action = quit_action
+            if not IS_WINDOWS:
+                quit_action.setShortcut(QtGui.QKeySequence.StandardKey.Quit)
+                menu = self.menuBar().addMenu("Muuri")
+                menu.addAction(show_action)
+                menu.addAction(quit_action)
+            tray_menu = QtWidgets.QMenu(self)
             tray_menu.addAction(show_action)
             tray_menu.addAction(refresh_action)
             tray_menu.addSeparator()
@@ -156,10 +97,28 @@ class MainWindow(QtWidgets.QMainWindow):
             self.last_physics_update = time.monotonic()
             self.drag_timer.timeout.connect(self.update_drag)
             self.drag_timer.start(16)
+            if not IS_WINDOWS:
+                self.desktop_screen = None
+                app.primaryScreenChanged.connect(self.screen_changed)
+                self.screen_changed(app.primaryScreen())
         except Exception as e:
             print(e)
             traceback.print_exc()
             raise
+
+    def screen_changed(self, screen):
+        if screen is None:
+            return
+        previous = self.desktop_screen
+        if previous is not None:
+            try:
+                previous.availableGeometryChanged.disconnect(self.start_refresh)
+            except (TypeError, RuntimeError):
+                pass
+        self.desktop_screen = screen
+        screen.availableGeometryChanged.connect(self.start_refresh)
+        if previous is not None:
+            self.start_refresh()
 
     def update_drag(self):
         now = time.monotonic()
@@ -167,8 +126,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.last_physics_update = now
         for pet in self.pets:
             if pet.draggable or pet.settings_clicks:
-                Windows.update_drag(pet)
-            Windows.update_physics(pet, elapsed)
+                Desktop.update_drag(pet)
+            Desktop.update_physics(pet, elapsed)
 
     def start_refresh(self):
         if self.refreshing:
@@ -179,7 +138,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.worker.stop()
                 if not self.worker.wait(3000):
                     raise RuntimeError("O processamento dos pets não encerrou a tempo.")
-            positions = {(p.species, p.color): (p.x, p.y, p.y_def, p.state.direction, p.free_roam,
+            positions = {(p.species, p.color, p.instance_index): (p.x, p.y, p.y_def, p.state.direction, p.free_roam,
                                                 p.physics_enabled, p.motion.vx, p.motion.vy)
                          for p in self.pets}
             new_pets = load_pets()
@@ -188,7 +147,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.pets = new_pets
             for pet in self.pets:
                 pet.main_window = self
-                saved = positions.get((pet.species, pet.color))
+                saved = positions.get((pet.species, pet.color, pet.instance_index))
                 if saved:
                     x, y, y_def, direction, free_roam, physics_enabled, vx, vy = saved
                     pet.x = max(0, min(x, pet.screen_width-pet.width))
@@ -198,6 +157,19 @@ class MainWindow(QtWidgets.QMainWindow):
                     pet.free_roam = free_roam
                     if physics_enabled and pet.physics_enabled:
                         pet.motion.vx, pet.motion.vy = vx, vy
+            occupied = [(p.x, p.y, p.width, p.height) for p in self.pets
+                        if (p.species, p.color, p.instance_index) in positions]
+            for pet in self.pets:
+                if (pet.species, pet.color, pet.instance_index) in positions:
+                    continue
+                for offset in range(0, pet.screen_width, pet.width + 16):
+                    x = max(0, pet.screen_width - pet.width - offset)
+                    if all(x + pet.width + 8 <= left or x >= left + width + 8
+                           or pet.y + pet.height <= top or pet.y >= top + height
+                           for left, top, width, height in occupied):
+                        pet.x = x
+                        break
+                occupied.append((pet.x, pet.y, pet.width, pet.height))
             self.worker = PetWorker(self.pets)
             self.worker.frame_ready.connect(self.render_pet)
             self.worker.start()

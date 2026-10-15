@@ -1,12 +1,33 @@
 import json
 import os
 import tempfile
+import sys
 from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent
-LIST_FILE = BASE_DIR / "pets_list.json"
-CONFIG_FILE = BASE_DIR / "config.json"
+def configuration_dir():
+    override = os.environ.get("MUURI_CONFIG_DIR")
+    if override:
+        return Path(override).expanduser().resolve()
+    if sys.platform == "darwin":
+        from PyQt6.QtCore import QStandardPaths
+        return Path(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.GenericDataLocation)) / "Muuri"
+    return BASE_DIR
+
+
+LIST_FILE = configuration_dir() / "pets_list.json"
+CONFIG_FILE = configuration_dir() / "config.json"
+
+
+def initialize_configs():
+    documents = {}
+    for path, filename in ((LIST_FILE, "pets_list.json"), (CONFIG_FILE, "config.json")):
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            documents[path] = read_json(BASE_DIR / filename)
+    if documents:
+        write_configs(documents)
 
 
 def read_json(path):

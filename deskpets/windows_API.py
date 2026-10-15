@@ -5,6 +5,9 @@ import traceback
 from ctypes import windll
 from ctypes import wintypes
 
+from PyQt6 import QtCore
+from .remove_alpha import GifHelper
+
 import win32gui
 import win32con
 
@@ -19,6 +22,7 @@ WS_EX_TOPMOST = 0x0008
 WS_EX_TRANSPARENT = 0x20
 WS_EX_NOACTIVATE = 0x08000000
 WS_POPUP = 0x80000000
+ULW_ALPHA = 0x2
 
 user32FS = windll.user32
 user32FS.SetProcessDPIAware()  # optional, makes functions return real pixel numbers instead of scaled values
@@ -76,6 +80,9 @@ def load_config():
             return json.load(f)
     except Exception as e:
         return {"layer": "front"}
+
+
+STATE_FULLSCREEN = False
 
 
 class Windows:
@@ -231,3 +238,86 @@ class Windows:
         except Exception as e:
             print(e)
             traceback.print_exc()
+
+
+    @staticmethod
+    def draw_pet_frame(pet, frame_image):
+        try:
+            if getattr(pet, "hwnd", None):
+                hbitmap = GifHelper.pil_to_hbitmap(frame_image)
+                Windows.draw_frame(pet, hbitmap)
+                gdi32.DeleteObject(hbitmap)
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+
+    @staticmethod
+    def draw_frame(self, hbitmap):
+        global STATE_FULLSCREEN
+        try:
+            full_screen_now = is_full_screen()
+            if full_screen_now != STATE_FULLSCREEN:
+                STATE_FULLSCREEN = full_screen_now
+                if getattr(self, "main_window", None):
+                    QtCore.QTimer.singleShot(0, self.main_window.start_refresh)
+                    return
+
+            hdc_screen = user32.GetDC(None)
+            hdc_mem = gdi32.CreateCompatibleDC(hdc_screen)
+            gdi32.SelectObject(hdc_mem, hbitmap)
+
+            blend = BLENDFUNCTION()
+            blend.BlendOp = 0
+            blend.BlendFlags = 0
+            blend.SourceConstantAlpha = 255
+            blend.AlphaFormat = 1
+
+            pt_pos = POINT(int(self.x), int(self.y))
+            size = SIZE(self.width, self.height)
+            pt_src = POINT(0, 0)
+
+            user32.UpdateLayeredWindow(self.hwnd, hdc_screen, ctypes.byref(pt_pos),
+                                       ctypes.byref(size), hdc_mem, ctypes.byref(pt_src),
+                                       0, ctypes.byref(blend), ULW_ALPHA)
+
+            gdi32.DeleteDC(hdc_mem)
+            user32.ReleaseDC(None, hdc_screen)
+
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+
+    @staticmethod
+    def close(pet):
+        try:
+            if getattr(pet, "hbitmaps", None):
+                for hb in pet.hbitmaps:
+                    try:
+                        gdi32.DeleteObject(hb)
+                    except Exception:
+                        pass
+            pet.hbitmaps = []
+
+            if getattr(pet, "hwnd", None):
+                if pet.draggable or pet.settings_clicks:
+                    Windows.end_drag(pet)
+                # Keep the mouse callback alive until native destruction finishes.
+                ctypes.windll.user32.DestroyWindow(pet.hwnd)
+                pet.hwnd = None
+                if pet.draggable or pet.settings_clicks:
+                    pet.drag_window_proc = None
+
+            pet.current_frame = 0
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+
+    @staticmethod
+    def screen_size():
+        return user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+
+    @staticmethod
+    def cursor_position():
+        point = POINT()
+        user32.GetCursorPos(ctypes.byref(point))
+        return point.x, point.y

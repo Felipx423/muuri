@@ -1,6 +1,10 @@
 import json
 import tempfile
 import unittest
+import sys
+
+if sys.platform != 'win32':
+    raise unittest.SkipTest('Win32 native integration; Qt backend has separate portable tests')
 from pathlib import Path
 from unittest.mock import patch
 
@@ -88,7 +92,11 @@ class FefoIntegrationTests(unittest.TestCase):
             item.stop()
         self.folder.cleanup()
 
-    def choose(self, species):
+    def choose_only(self, species):
+        for entry in list(self.panel.draft['pets']):
+            if entry['species'] != species and entry.get('enabled'):
+                self.panel.select(entry['species'])
+                self.panel.enabled.setChecked(False)
         self.panel.select(species)
         self.panel.activate_selected()
 
@@ -124,7 +132,7 @@ class FefoIntegrationTests(unittest.TestCase):
         old_pet = self.window.pets[0]
         old_worker, old_hwnd = self.window.worker, old_pet.hwnd
         before = self.list_path.read_bytes()
-        self.choose('fefo')
+        self.choose_only('fefo')
         self.panel.physics.setChecked(True)
         self.panel.movement.setValue(150)
         self.panel.animation.setValue(175)
@@ -147,19 +155,19 @@ class FefoIntegrationTests(unittest.TestCase):
             self.assertEqual(other.pets[0].animation_multiplier, 1.75)
         finally:
             other.shutdown(); other.deleteLater()
-        self.choose('muuri')
+        self.choose_only('muuri')
         self.assertTrue(self.panel.apply())
         self.stop_worker()
         self.assertEqual([p.species for p in self.window.pets], ['muuri'])
         self.assertEqual(self.window.pets[0].height, 64)
-        self.choose('fefo')
+        self.choose_only('fefo')
         self.assertEqual(self.panel.animation.value(), 175)
         self.assertTrue(self.panel.apply())
         self.stop_worker()
         self.assertEqual([p.species for p in self.window.pets], ['fefo'])
 
     def test_drag_flight_regrab_landing_restores_ground_state(self):
-        self.choose('fefo')
+        self.choose_only('fefo')
         self.panel.physics.setChecked(True)
         self.assertTrue(self.panel.apply())
         self.stop_worker()
@@ -218,7 +226,7 @@ class FefoIntegrationTests(unittest.TestCase):
         self.assertEqual(pet.state.name, 'drag')
 
     def test_native_states_drag_mirroring_gravity_and_throw(self):
-        self.choose('fefo')
+        self.choose_only('fefo')
         self.panel.physics.setChecked(True)
         self.assertTrue(self.panel.apply())
         self.stop_worker()

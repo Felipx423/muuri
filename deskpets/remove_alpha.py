@@ -1,11 +1,13 @@
 import ctypes
 import os
 import traceback
+import sys
 
 from PIL import Image
 
-user32 = ctypes.windll.user32
-gdi32 = ctypes.windll.gdi32
+if sys.platform == "win32":
+    user32 = ctypes.windll.user32
+    gdi32 = ctypes.windll.gdi32
 
 
 class GifHelper:
@@ -18,7 +20,9 @@ class GifHelper:
             with Image.open(abs_path) as img:
                 try:
                     while True:
-                        frame = img.convert("RGBA").transpose(Image.FLIP_TOP_BOTTOM)
+                        frame = img.convert("RGBA")
+                        if sys.platform == "win32":
+                            frame = frame.transpose(Image.FLIP_TOP_BOTTOM)
                         frames.append(frame)
                         img.seek(img.tell() + 1)
                 except EOFError:

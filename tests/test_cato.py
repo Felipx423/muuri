@@ -1,6 +1,10 @@
 import json
 import tempfile
 import unittest
+import sys
+
+if sys.platform != 'win32':
+    raise unittest.SkipTest('Win32 native integration; Qt backend has separate portable tests')
 from pathlib import Path
 from unittest.mock import patch
 
@@ -113,7 +117,11 @@ class CatoIntegrationTests(unittest.TestCase):
             item.stop()
         self.folder.cleanup()
 
-    def choose(self, species):
+    def choose_only(self, species):
+        for entry in list(self.panel.draft['pets']):
+            if entry['species'] != species and entry.get('enabled'):
+                self.panel.select(entry['species'])
+                self.panel.enabled.setChecked(False)
         self.panel.select(species)
         self.panel.activate_selected()
 
@@ -147,7 +155,7 @@ class CatoIntegrationTests(unittest.TestCase):
         for species in ['cato','muuri','cato','fefo','cato','fefo','cato']:
             old_pet,old_worker = self.window.pets[0],self.window.worker
             old_hwnd = old_pet.hwnd
-            self.choose(species)
+            self.choose_only(species)
             if species == 'cato':
                 self.panel.physics.setChecked(True)
                 self.panel.movement.setValue(150)
@@ -177,7 +185,7 @@ class CatoIntegrationTests(unittest.TestCase):
             other.deleteLater()
 
     def test_native_rendering_mirroring_and_drag_uses_ground_physics(self):
-        self.choose('cato')
+        self.choose_only('cato')
         self.panel.physics.setChecked(True)
         self.assertTrue(self.panel.apply())
         self.stop_worker()

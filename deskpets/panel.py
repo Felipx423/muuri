@@ -15,7 +15,7 @@ SIZES = [("Very Small", "Bem pequeno", 20), ("Small", "Pequeno", 40),
 STATE_NAMES = {"idle": "Parada", "walk": "Andando", "walk_fast": "Trotando",
                "run": "Correndo", "lie": "Descansando", "swipe": "Reação",
                "drag": "Sendo arrastada", "fly": "Voando"}
-FIELDS = ("enabled", "colors", "size", "draggable", "physics_enabled", "movement_multiplier", "animation_multiplier")
+FIELDS = ("enabled", "colors", "size", "draggable", "physics_enabled", "movement_multiplier", "animation_multiplier", "count")
 STYLE = """
 QWidget { color: #293050; font-family: 'Segoe UI'; font-size: 12px; }
 QWidget#panel { background: #f6f5fc; }
@@ -35,7 +35,7 @@ QTabBar::tab { color: #626a83; padding: 9px 23px; margin: 0 6px 10px 0; border-r
 QTabBar::tab:selected { background: #e5e3fa; color: #514a9a; font-weight: 700; }
 QTabBar::tab:hover { background: #eeecfb; }
 QListWidget#collection { background: transparent; border: 0; padding: 0; }
-QComboBox { background: #fafaff; border: 1px solid #dcdbea; border-radius: 7px; padding: 5px 9px; min-height: 18px; }
+QComboBox, QLineEdit { background: #fafaff; border: 1px solid #dcdbea; border-radius: 7px; padding: 5px 9px; min-height: 18px; }
 QComboBox:hover { border-color: #9d96d8; }
 QComboBox:focus { border: 2px solid #7970c9; }
 QComboBox QAbstractItemView { background: white; selection-background-color: #e8e5fa; selection-color: #293050; }
@@ -252,11 +252,11 @@ class SettingsPanel(QtWidgets.QWidget):
         self.species_list.setFixedHeight(144)
         self.species_list.setMouseTracking(True)
         self.species_list.setItemDelegate(PetCardDelegate(self.species_list))
-        featured = ("muuri", "fefo", "cato")
-        for species in sorted(PETS_DATA, key=lambda name: (featured.index(name) if name in featured else 3, name)):
+        featured = ("muuri", "fefo", "cato", "manu")
+        for species in sorted(PETS_DATA, key=lambda name: (featured.index(name) if name in featured else len(featured), name)):
             item = QtWidgets.QListWidgetItem(pet_icon(species), species.capitalize())
             item.setData(QtCore.Qt.ItemDataRole.UserRole, species)
-            item.setToolTip(f"Selecionar {species.capitalize()} · confirme em Aplicar")
+            item.setToolTip(f"Ativar {species.capitalize()} junto dos outros pets · confirme em Aplicar")
             self.species_list.addItem(item)
         controls = QtWidgets.QFrame()
         controls.setObjectName("card")
@@ -268,6 +268,15 @@ class SettingsPanel(QtWidgets.QWidget):
         form.addWidget(label("Ajustes do pet", "sectionTitle"))
         self.enabled = QtWidgets.QCheckBox("Mostrar na área de trabalho")
         form.addWidget(self.enabled)
+        quantity_row = QtWidgets.QHBoxLayout()
+        quantity_row.addWidget(label("Quantidade"))
+        self.quantity = QtWidgets.QLineEdit("1")
+        self.quantity.setAccessibleName("Quantidade de pets por cor")
+        self.quantity.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[1-9][0-9]*")))
+        self.quantity.setMaximumWidth(100)
+        self.quantity.setToolTip("Cópias desta espécie para cada cor marcada. Digite um número inteiro positivo.")
+        quantity_row.addWidget(self.quantity)
+        form.addLayout(quantity_row)
         form.addWidget(label("CORES", "eyebrow"))
         self.colors_box = QtWidgets.QWidget()
         self.colors_layout = QtWidgets.QGridLayout(self.colors_box)
@@ -340,7 +349,7 @@ class SettingsPanel(QtWidgets.QWidget):
         collection_heading = QtWidgets.QHBoxLayout()
         collection_heading.addWidget(label("Escolha seu companheiro", "sectionTitle"))
         collection_heading.addStretch()
-        collection_heading.addWidget(label("Selecione um cartão e confirme em Aplicar", "muted"))
+        collection_heading.addWidget(label("Ative vários pets, escolha as quantidades e confirme em Aplicar", "muted"))
         self.pets_scroll = QtWidgets.QScrollArea()
         self.pets_scroll.setWidgetResizable(True)
         self.pets_scroll.setWidget(pets_page)
@@ -366,7 +375,7 @@ class SettingsPanel(QtWidgets.QWidget):
         pref.addWidget(self.layer_combo)
         pref.addSpacing(18)
         pref.addWidget(label("Seu painel sempre por perto", "sectionTitle"))
-        pref.addWidget(label("Na Muuri, no Fefo ou no Cato, clique quatro vezes em até 1,5 segundo, sem arrastar. Funciona mesmo com o arraste desligado.\n\nVocê também pode abrir as configurações pelo ícone da bandeja. Fechar o painel mantém os pets ativos; use Sair na bandeja para encerrar.", "muted", True))
+        pref.addWidget(label("Na Muuri, no Fefo, no Cato ou na Manu, clique quatro vezes em até 1,5 segundo, sem arrastar. Funciona mesmo com o arraste desligado.\n\nVocê também pode abrir as configurações pelo ícone da bandeja. Fechar o painel mantém os pets ativos; use Sair na bandeja para encerrar.", "muted", True))
         pref.addStretch()
         self.tabs.addTab(preferences, "Preferências")
         credits = QtWidgets.QTextBrowser()
@@ -379,6 +388,7 @@ class SettingsPanel(QtWidgets.QWidget):
                         '<p>Inspirado em <a href="https://github.com/tonybaloney/vscode-pets">vscode-pets</a>, '
                         'por tonybaloney. As mídias originais vêm desse projeto e seus créditos continuam aplicáveis.</p>'
                         '<p>Muuri: design de referência fornecido pelo usuário; animações adaptadas para DeskPets.</p>'
+                        '<p>Manu: design de referência fornecido pelo usuário; animações adaptadas para DeskPets com geração de imagens.</p>'
                         '<h3>Licença MIT do DeskPets</h3><pre style="white-space: pre-wrap">'
                         + html.escape(license_text) + '</pre>')
         self.tabs.addTab(credits, "Créditos")
@@ -392,6 +402,7 @@ class SettingsPanel(QtWidgets.QWidget):
         footer.addWidget(self.apply_button)
         outer.addLayout(footer)
         self.enabled.toggled.connect(self.changed)
+        self.quantity.textChanged.connect(self.changed)
         self.draggable.toggled.connect(self.changed)
         self.physics.toggled.connect(self.changed)
         self.size.currentIndexChanged.connect(self.changed)
@@ -435,7 +446,7 @@ class SettingsPanel(QtWidgets.QWidget):
                     {"species": self.species, "colors": [], "enabled": False, "size": "Original"})
 
     def select(self, species):
-        # Opening the panel or selecting a pet programmatically must not stage a swap.
+        # Opening the panel or selecting a pet programmatically must not enable it.
         self.selecting = True
         try:
             for index in range(self.species_list.count()):
@@ -453,9 +464,6 @@ class SettingsPanel(QtWidgets.QWidget):
     def activate_selected(self, item=None):
         if self.loading:
             return
-        for entry in self.draft["pets"]:
-            if entry["species"] != self.species:
-                entry["enabled"] = False
         self.loading = True
         self.enabled.setChecked(True)
         if not any(check.isChecked() for check in self.color_checks.values()):
@@ -472,6 +480,7 @@ class SettingsPanel(QtWidgets.QWidget):
         entry = self.entry()
         self.title.setText(self.species.capitalize())
         self.enabled.setChecked(entry.get("enabled", True))
+        self.quantity.setText(str(entry.get("count", 1)))
         self.draggable.setChecked(entry.get("draggable", False))
         self.physics.setChecked(entry.get("physics_enabled", False))
         self.physics.setToolTip(PETS_DATA[self.species].get("physics", {}).get(
@@ -538,6 +547,8 @@ class SettingsPanel(QtWidgets.QWidget):
         if self.loading:
             return
         entry = copy.deepcopy(self.entry())
+        if self.quantity.hasAcceptableInput():
+            entry["count"] = int(self.quantity.text())
         entry.update(enabled=self.enabled.isChecked(), colors=[c for c, w in self.color_checks.items() if w.isChecked()],
                      size=self.size.currentData(), draggable=self.draggable.isChecked(),
                      physics_enabled=self.physics.isChecked(),
@@ -575,6 +586,10 @@ class SettingsPanel(QtWidgets.QWidget):
         self.select_species(self.species_list.currentItem())
 
     def apply(self):
+        if not self.quantity.hasAcceptableInput():
+            self.status.setText("Informe uma quantidade inteira maior que zero.")
+            self.quantity.setFocus()
+            return False
         if not self.is_dirty():
             return True
         try:

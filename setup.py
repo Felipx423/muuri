@@ -8,7 +8,8 @@ setup(
         "PyQt6",
         "Pillow",
         "PyQt6-WebEngine",
-        "pywin32"
+        'pywin32; sys_platform == "win32"',
+        'pyobjc-framework-Cocoa; sys_platform == "darwin"'
     ],
     entry_points={
         "console_scripts": [
