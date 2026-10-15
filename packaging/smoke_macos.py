@@ -1,6 +1,7 @@
 """Start the frozen app in isolation; visual desktop QA remains a separate step."""
-import json
+import argparse
 import os
+import plistlib
 import subprocess
 import sys
 import tempfile
@@ -38,5 +39,32 @@ def smoke(app):
         print('PASS .app inicia sem Python no PATH e bloqueia execuções duplicadas; preferências isoladas.')
 
 
+def smoke_dmg(image):
+    if sys.platform!='darwin':
+        raise RuntimeError('Este teste de DMG precisa de macOS')
+    with tempfile.TemporaryDirectory(prefix='muuri-install-') as folder:
+        root = Path(folder)
+        mount = root/'volume'
+        result = subprocess.run(['hdiutil','attach','-readonly','-nobrowse','-plist',
+                                 '-mountpoint',str(mount),str(image)],
+                                check=True,capture_output=True)
+        try:
+            entities = plistlib.loads(result.stdout)['system-entities']
+            if not any(item.get('mount-point')==str(mount) for item in entities):
+                raise RuntimeError('O DMG não foi montado no diretório de teste')
+            target = root/'Applications/Muuri.app'
+            target.parent.mkdir()
+            subprocess.run(['ditto',str(mount/'Muuri.app'),str(target)],check=True)
+        finally:
+            subprocess.run(['hdiutil','detach',str(mount)],check=True)
+        subprocess.run(['codesign','--verify','--deep','--strict',str(target)],check=True)
+        smoke(target)
+        print('PASS DMG monta, instala uma cópia independente e inicia após desmontar a imagem.')
+
+
 if __name__=='__main__':
-    smoke(Path(sys.argv[1]).resolve())
+    parser = argparse.ArgumentParser()
+    parser.add_argument('path',type=Path)
+    parser.add_argument('--dmg',action='store_true')
+    args = parser.parse_args()
+    (smoke_dmg if args.dmg else smoke)(args.path.resolve())

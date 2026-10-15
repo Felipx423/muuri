@@ -192,6 +192,8 @@ def build(args):
             (staging/'Applications').symlink_to('/Applications',target_is_directory=True)
             subprocess.run(['hdiutil','create','-ov','-volname','Muuri','-srcfolder',str(staging),
                             '-format','UDZO',str(OUTPUT/'Muuri-macOS-arm64-teste.dmg')],check=True)
+        subprocess.run([sys.executable,str(ROOT/'packaging/smoke_macos.py'),'--dmg',
+                        str(OUTPUT/'Muuri-macOS-arm64-teste.dmg')],check=True)
     write_hashes()
     print('Aplicativo:',app)
     print('Pacotes:',OUTPUT)

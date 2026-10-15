@@ -25,7 +25,7 @@ Muuri é um desktop pet para Windows com animações, interação, arraste, fís
 
 Para **Windows 10/11 de 64 bits**. Não precisa de Python nem VS Code. O aplicativo ainda não possui assinatura digital própria. Para remover, use **Configurações do Windows → Aplicativos**; as preferências ficam preservadas.
 
-O suporte experimental a **macOS Apple Silicon** está em desenvolvimento nesta branch. Consulte [packaging/MACOS.md](packaging/MACOS.md) para executar pelo código ou gerar o `.app` em um Mac. O instalador Windows da release atual continua separado.
+Para **macOS Apple Silicon (M1 ou posterior)**, baixe o DMG na [prévia para Mac](https://github.com/Felipx423/muuri/releases/tag/muuri-v1.0.2-macos-preview.1), arraste `Muuri.app` para Applications e abra pelo Finder. É uma versão experimental, ainda sem notarização Apple. Consulte [packaging/MACOS.md](packaging/MACOS.md) para detalhes de instalação, limitações e compilação.
 
 ## 🐮 Como usar
 

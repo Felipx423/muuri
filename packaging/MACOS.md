@@ -73,6 +73,8 @@ Após notarização/staple, recalcule os hashes do DMG alterado antes de publica
 
 O builder verifica arquitetura arm64, assinatura, metadados, versões mínimas de bibliotecas, licenças, fontes, defaults e hashes de todos os assets. Depois, inicia o executável com configurações temporárias e sem Python no PATH, e confere que outras execuções encerram sem duplicar o aplicativo. Esse teste de início não substitui a inspeção visual dos pets.
 
+Ao gerar o DMG, também monta a imagem em modo somente leitura, copia `Muuri.app` para uma pasta de instalação temporária, desmonta o volume e verifica a assinatura e a inicialização da cópia instalada. Isso confirma que o aplicativo não depende do volume montado ou da pasta de compilação.
+
 Checklist visual no Mac: todos os pets e estados; transparência e espelhamento; arraste/arremesso e voo do Fefo; quatro cliques com/sem arraste; várias espécies e cópias; Aplicar/Descartar/reinício; frente/atrás das janelas; barra de menus/Sair; Retina, Dock, Spaces, tela cheia e monitores. Anote versão do macOS e modelo do Mac.
 
 ## Créditos e fontes
