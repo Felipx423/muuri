@@ -50,7 +50,9 @@ def smoke_dmg(image):
                                 check=True,capture_output=True)
         try:
             entities = plistlib.loads(result.stdout)['system-entities']
-            if not any(item.get('mount-point')==str(mount) for item in entities):
+            # hdiutil reports /private/var where tempfile may return /var.
+            if not any(item.get('mount-point') and Path(item['mount-point']).resolve()==mount.resolve()
+                       for item in entities):
                 raise RuntimeError('O DMG não foi montado no diretório de teste')
             target = root/'Applications/Muuri.app'
             target.parent.mkdir()
