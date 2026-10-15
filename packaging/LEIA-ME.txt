@@ -9,6 +9,9 @@ Abra Iniciar Muuri. Quatro cliques rápidos nela abrem o painel.
 Arraste com o mouse. Ative a física no painel se quiser gravidade e arremesso.
 Clique em Aplicar para salvar. A bandeja, perto do relógio, tem a opção Sair.
 Só uma instância abre por sessão, mesmo clicando várias vezes no atalho.
+Ative várias espécies no painel e ajuste Quantidade para criar cópias.
+Os cartões preservam os demais pets ativos; Aplicar confirma as mudanças.
+Muuri, Fefo, Cato e Manu ficam disponíveis, além dos pets originais.
 
 REMOVER
 Use Configurações do Windows > Aplicativos > Muuri > Desinstalar.

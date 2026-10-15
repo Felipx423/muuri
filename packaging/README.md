@@ -31,7 +31,7 @@ espécies, licenças e código Python são preservados. A compressão é LZMA2/u
 
 ## Identidade e compatibilidade
 
-O candidato de polish usa a versão 1.0.2, nome Muuri, executável Muuri.exe,
+O pacote Windows usa a versão 1.1.0, nome Muuri, executável Muuri.exe,
 instalador Muuri-Setup.exe e o ícone próprio existente. Nenhum publisher foi
 inventado: o campo AppPublisher foi omitido. Os créditos continuam no guia,
 no painel e na licença original. A versão 1.0.1 publicada não é substituída

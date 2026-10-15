@@ -119,6 +119,27 @@ class PanelTests(unittest.TestCase):
     def pet(self):
         return next(p for p in self.window.pets if p.species == "muuri")
 
+    def test_upgrade_adds_new_pet_with_drag_and_settings_without_changing_existing_entries(self):
+        older = copy.deepcopy(self.data)
+        older['pets'] = [entry for entry in older['pets'] if entry['species'] != 'manu']
+        self.list_path.write_text(json.dumps(older), encoding='utf-8')
+        self.panel.original = older
+        self.panel.discard()
+        before = self.list_path.read_bytes()
+        self.panel.select('manu')
+        self.assertEqual(self.list_path.read_bytes(), before)
+        self.assertTrue(self.panel.draggable.isChecked())
+        self.panel.activate_selected()
+        self.assertTrue(self.panel.apply())
+        self.window.worker.stop()
+        self.assertTrue(self.window.worker.wait(3000))
+        saved = config_io.read_json(self.list_path)
+        self.assertEqual([entry for entry in saved['pets'] if entry['species'] != 'manu'], older['pets'])
+        manu = next(pet for pet in self.window.pets if pet.species == 'manu')
+        self.assertTrue(manu.draggable)
+        self.assertEqual(manu.settings_clicks, 4)
+        self.assertEqual(saved['future_root'], older['future_root'])
+
     def test_open_preview_and_discard_never_save(self):
         before = self.list_path.read_bytes(), self.config_path.read_bytes()
         self.assertEqual(self.panel.species, "muuri")

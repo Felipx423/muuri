@@ -442,8 +442,11 @@ class SettingsPanel(QtWidgets.QWidget):
         return slider, value
 
     def entry(self):
+        data = PETS_DATA[self.species]
+        interactive = 'drag' in data['states'][data['colors'][0]]
         return next((e for e in self.draft["pets"] if e["species"] == self.species),
-                    {"species": self.species, "colors": [], "enabled": False, "size": "Original"})
+                    {"species": self.species, "colors": [], "enabled": False, "size": "Original",
+                     "draggable": interactive, "settings_clicks": 4 if interactive else 0})
 
     def select(self, species):
         # Opening the panel or selecting a pet programmatically must not enable it.
@@ -603,7 +606,7 @@ class SettingsPanel(QtWidgets.QWidget):
                         continue
                     if entry.get("enabled") and not entry.get("colors"):
                         raise ValueError(f"Selecione pelo menos uma cor para {entry['species'].capitalize()}.")
-                    target = entries.setdefault(entry["species"], {"species": entry["species"]})
+                    target = entries.setdefault(entry["species"], copy.deepcopy(entry))
                     target.update({key: copy.deepcopy(entry[key]) for key in FIELDS if key in entry})
                 current["pets"] = list(entries.values())
                 documents[config_io.LIST_FILE] = current
