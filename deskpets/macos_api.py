@@ -17,8 +17,10 @@ class PetWindow(QtWidgets.QWidget):
                  | QtCore.Qt.WindowType.WindowDoesNotAcceptFocus)
         config = config_io.read_json(config_io.CONFIG_FILE)
         self.layer = config.get("layer", "front")
-        flags |= (QtCore.Qt.WindowType.WindowStaysOnTopHint if self.layer == "front"
-                  else QtCore.Qt.WindowType.WindowStaysOnBottomHint)
+        # Cocoa owns the layer; Qt's top hint would reset it to modal-panel level.
+        if sys.platform != "darwin":
+            flags |= (QtCore.Qt.WindowType.WindowStaysOnTopHint if self.layer == "front"
+                      else QtCore.Qt.WindowType.WindowStaysOnBottomHint)
         if not interactive:
             flags |= QtCore.Qt.WindowType.WindowTransparentForInput
         super().__init__(None, flags)
@@ -57,6 +59,11 @@ class PetWindow(QtWidgets.QWidget):
     def place(self, x, y):
         origin = screen_rect().topLeft()
         self.move(round(x) + origin.x(), round(y) + origin.y())
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        # Qt may finish synchronizing native flags after show() returns.
+        QtCore.QTimer.singleShot(0, self.configure_cocoa)
 
     def paintEvent(self, event):
         if self.frame is not None:

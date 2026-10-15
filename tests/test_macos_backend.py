@@ -194,10 +194,20 @@ class MacOSBackendTests(unittest.TestCase):
     def test_cocoa_spaces_level_and_inactive_visibility(self):
         import AppKit
         import objc
-        native = objc.objc_object(c_void_p=c_void_p(int(self.pet.hwnd.winId()))).window()
-        self.assertEqual(native.level(),AppKit.NSFloatingWindowLevel)
-        self.assertFalse(native.hidesOnDeactivate())
-        self.assertTrue(native.collectionBehavior() & AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces)
+        for layer,level in [('front',AppKit.NSFloatingWindowLevel),('back',AppKit.NSNormalWindowLevel-1)]:
+            with self.subTest(layer=layer):
+                self.config_path.write_text(json.dumps({'layer':layer}),encoding='utf-8')
+                self.assertTrue(self.owner.start_refresh())
+                self.stop_worker()
+                view = self.owner.pets[0].hwnd
+                self.assertFalse(view.windowFlags() & QtCore.Qt.WindowType.WindowStaysOnTopHint)
+                view.hide()
+                view.show()
+                self.app.processEvents()
+                native = objc.objc_object(c_void_p=c_void_p(int(view.winId()))).window()
+                self.assertEqual(native.level(),level)
+                self.assertFalse(native.hidesOnDeactivate())
+                self.assertTrue(native.collectionBehavior() & AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces)
 
 
 class MacOSImportTests(unittest.TestCase):
