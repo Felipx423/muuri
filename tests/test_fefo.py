@@ -159,7 +159,7 @@ class FefoIntegrationTests(unittest.TestCase):
         self.assertTrue(self.panel.apply())
         self.stop_worker()
         self.assertEqual([p.species for p in self.window.pets], ['muuri'])
-        self.assertEqual(self.window.pets[0].height, 64)
+        self.assertEqual(self.window.pets[0].height, 128)
         self.choose_only('fefo')
         self.assertEqual(self.panel.animation.value(), 175)
         self.assertTrue(self.panel.apply())

@@ -1,5 +1,14 @@
 # Changelog
 
+## Muuri [1.4.0]
+### Added
+- Voltinha, com sete animações transparentes de 128 px derivadas de uma única base canônica.
+- Alternância entre os estilos pixelado e liso da Muuri no painel.
+- Favoritos e remoção imediata dos pets pelo menu da bandeja.
+### Changed
+- Sprites da Muuri ampliados para 160×128 px; o tamanho Original passa a 128 px.
+- Pets no macOS permanecem acima das janelas comuns mesmo quando outro app está ativo.
+
 ## Muuri [1.3.0]
 ### Added
 - Eco, com sete animações transparentes de 128 px e locomoção lateral.

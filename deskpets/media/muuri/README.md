@@ -81,3 +81,18 @@ Hashes confirmaram que os outros seis GIFs, pets_data.json e pets_list.json
 permanecem iguais aos anteriores a esta correção. A prévia muuri-arraste.gif
 foi atualizada. Reinicie a instância antiga para recarregar os frames.
 Sem commit ou push.
+
+
+## Escala 2x — 16/10/2026
+
+Todos os sete estados ativos foram ampliados exatamente 2x a partir dos GIFs
+anteriores: canvas de 80x64 para 160x128, mantendo o mesmo número de frames,
+os tempos por frame, o loop, a transparência e o conteúdo de cada pixel. A
+ampliação usa pixels inteiros para preservar o desenho pixelado e as cores.
+O tamanho `Original` passa a ter 128 px de altura. Os tamanhos fixos Pequeno,
+Médio, Grande e Bem grande continuam usando as alturas próprias do aplicativo.
+As fontes originais foram guardadas fora do repositório durante a revisão.
+
+## Estilo liso alternativo
+
+A opção **Liso** mantém os mesmos frames e poses da Muuri pixelada, com suavização de contorno por reamostragem Lanczos. Os GIFs ficam no mesmo canvas de 160x128 px, com transparência, tempos e contagem de frames iguais. **Pixelado** continua sendo o padrão; escolha o estilo no painel e clique em Aplicar para salvar.

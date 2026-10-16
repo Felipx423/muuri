@@ -22,10 +22,17 @@ JSON_FILE = os.path.join(BASE_DIR, "pets_data.json")
 with open(JSON_FILE, "r", encoding="utf-8") as f:
     PETS_DATA = json.load(f)
 
+
+def states_for(species, color, style="pixel"):
+    data = PETS_DATA[species]
+    style_data = data.get("styles", {}).get(style, {})
+    return style_data.get("states", {}).get(color, data["states"][color])
+
 # Pet window
 class Pet:
     def __init__(self, species, color, fps, size, draggable=False, settings_clicks=0,
-                 movement_multiplier=1.0, animation_multiplier=1.0, physics_enabled=False):
+                 movement_multiplier=1.0, animation_multiplier=1.0, physics_enabled=False,
+                 style="pixel"):
         try:
             self.hbitmaps = None
             self.frame_interval = None
@@ -36,6 +43,7 @@ class Pet:
             self.frames = None
             self.species = species
             self.color = color
+            self.style = style
             self.fps = fps
             self.size = size
             self.draggable = draggable
@@ -56,7 +64,7 @@ class Pet:
             species_data = PETS_DATA[species]
             defaults = species_data.get("defaults", {})
             self.STATES_INFO = {}
-            for state_name, gif_path in species_data["states"][color].items():
+            for state_name, gif_path in states_for(species, color, style).items():
                 state_defaults = defaults.get(state_name, {})
                 self.STATES_INFO[state_name] = {
                     "gif": gif_path,

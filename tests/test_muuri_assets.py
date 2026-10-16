@@ -14,8 +14,9 @@ class DragAssetTests(unittest.TestCase):
                 gif.seek(index)
                 frame = gif.convert("RGBA")
                 green = 0
+                # The 2x canvas moves the same tail pixels into the first 48 columns.
                 for y in range(frame.height):
-                    for x in range(24):
+                    for x in range(48):
                         red, value, blue, alpha = frame.getpixel((x, y))
                         if alpha == 255 and value >= 80 and value > red * 1.4 and value > blue * 1.2:
                             green += 1
@@ -25,7 +26,7 @@ class DragAssetTests(unittest.TestCase):
     def test_canvas_transparent_margins_and_timing(self):
         with Image.open(ASSET) as gif:
             self.assertEqual(gif.n_frames, 8)
-            self.assertEqual(gif.size, (80, 64))
+            self.assertEqual(gif.size, (160, 128))
             self.assertEqual(gif.info["loop"], 0)
             for index in range(8):
                 gif.seek(index)
@@ -33,7 +34,7 @@ class DragAssetTests(unittest.TestCase):
                 self.assertEqual(gif.disposal_method, 2)
                 frame = gif.convert("RGBA")
                 left, top, right, bottom = frame.getbbox()
-                self.assertTrue(0 < left < right < 80 and 0 < top < bottom < 64)
+                self.assertTrue(0 < left < right < 160 and 0 < top < bottom < 128)
                 self.assertEqual(frame.getpixel((0, 0))[3], 0)
 
 

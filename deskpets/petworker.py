@@ -64,7 +64,8 @@ def load_pets():
                               settings_clicks=entry.get("settings_clicks", 0),
                               movement_multiplier=entry.get("movement_multiplier", 1.0),
                               animation_multiplier=entry.get("animation_multiplier", 1.0),
-                              physics_enabled=entry.get("physics_enabled", False))
+                              physics_enabled=entry.get("physics_enabled", False),
+                              style=entry.get("style", "pixel"))
                     pet.main_window = None
                     pet.instance_index = instance_index
                     pets.append(pet)

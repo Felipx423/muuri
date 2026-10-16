@@ -31,7 +31,7 @@ Veja [como funcionam as atualizações](UPDATES.md).
 
 Para **Windows 10/11 de 64 bits**. Não precisa de Python nem VS Code. O aplicativo ainda não possui assinatura digital própria. Para remover, use **Configurações do Windows → Aplicativos**; as preferências ficam preservadas.
 
-Para **macOS Apple Silicon (M1 ou posterior)**, baixe o DMG na [prévia para Mac](https://github.com/Felipx423/muuri/releases/tag/muuri-v1.0.2-macos-preview.1), arraste `Muuri.app` para Applications e abra pelo Finder. É uma versão experimental, ainda sem notarização Apple. Consulte [packaging/MACOS.md](packaging/MACOS.md) para detalhes de instalação, limitações e compilação.
+Para **macOS Apple Silicon (M1 ou posterior)**, baixe o DMG da versão mais recente em [Releases](https://github.com/Felipx423/muuri/releases/latest), arraste `Muuri.app` para Applications e abra pelo Finder. O app para Mac ainda não é notarizado pela Apple; consulte [packaging/MACOS.md](packaging/MACOS.md) para instruções de abertura e limitações.
 
 ## 🐮 Como usar
 
@@ -42,6 +42,8 @@ Para **macOS Apple Silicon (M1 ou posterior)**, baixe o DMG na [prévia para Mac
 - O limite é de **6 pets somando todas as espécies e cores**. Ao atingir o limite, remova um pet ou reduza uma quantidade para adicionar outro. Configurações antigas acima do limite exibem somente os primeiros seis, sem reescrever suas preferências automaticamente.
 - Para remover cópias, use **Remover 1** ou diminua **Quantidade**. **Remover espécie** e quantidade **zero** retiram todas as cópias dessa espécie. **Remover todos os pets** limpa a tela. Confirme em **Aplicar**; o ícone da bandeja continua disponível.
 - Use o ícone na bandeja, perto do relógio, para abrir as configurações ou **Sair**.
+- No menu da bandeja, **Remover todos os pets** limpa a tela imediatamente e mantém o aplicativo aberto. As remoções ficam salvas.
+- Em **Favoritos → Escolher favoritos**, marque as espécies que quer ter à mão. Depois, marque ou desmarque cada pet em **Favoritos** para colocá-lo ou tirá-lo da tela imediatamente. A lista de favoritos permanece salva mesmo quando todos os pets são removidos; tamanho, cores, quantidade e demais ajustes de cada espécie são reutilizados, respeitando o limite de 6 pets.
 
 ## 🖼️ Screenshots
 
@@ -78,6 +80,7 @@ Consulte [packaging/README.md](packaging/README.md) para compilar o executável 
 - **DeskPets**, por **Minniti Julien (Jumitti)**: [repositório original](https://github.com/Jumitti/DeskPets). A licença MIT e seu aviso de copyright estão preservados em [LICENSE](LICENSE).
 - **vscode-pets**, por **tonybaloney**: [projeto de inspiração da base](https://github.com/tonybaloney/vscode-pets). Os créditos e condições aplicáveis aos assets herdados continuam válidos.
 - **Muuri**: design de referência fornecido pelo usuário; animações adaptadas para esta integração.
+- **Voltinha**: referência visual fornecida pelo usuário; base e animações adaptadas para esta integração.
 - **PyQt6**: a distribuição executável usa GPL v3 e inclui a licença, os fontes da aplicação e os assets necessários. As licenças das demais bibliotecas acompanham o instalador em `_internal/THIRD_PARTY_LICENSES`.
 
 O ZIP de fonte incluído no instalador reutiliza os assets de `_internal/deskpets/media`. Após extrair o fonte, copie essa pasta para `deskpets/media` antes de compilar; o ZIP autônomo disponível nas versões já inclui os assets.

@@ -136,7 +136,7 @@ def verify(app):
 
 
 def write_hashes():
-    names = ('Muuri-macOS-arm64-teste.zip','Muuri-macOS-arm64-teste.dmg',
+    names = ('Muuri-macOS-arm64.zip','Muuri-macOS-arm64.dmg',
              'Muuri-macOS-codigo-fonte.zip','COMO-USAR-NO-MAC.md')
     lines = [hashlib.sha256((OUTPUT/name).read_bytes()).hexdigest()+'  '+name for name in names if (OUTPUT/name).exists()]
     (OUTPUT/'MUURI-macOS-SHA256.txt').write_text('\n'.join(lines)+'\n',encoding='utf-8')
@@ -183,7 +183,7 @@ def build(args):
     subprocess.run([*command,str(app)],check=True)
     verify(app)
     subprocess.run([sys.executable,str(ROOT/'packaging/smoke_macos.py'),str(app)],check=True)
-    archive = OUTPUT/'Muuri-macOS-arm64-teste.zip'
+    archive = OUTPUT/'Muuri-macOS-arm64.zip'
     subprocess.run(['ditto','-c','-k','--sequesterRsrc','--keepParent',str(app),str(archive)],check=True)
     if args.dmg:
         with tempfile.TemporaryDirectory(prefix='dmg-',dir=WORK) as folder:
@@ -191,9 +191,9 @@ def build(args):
             subprocess.run(['ditto',str(app),str(staging/'Muuri.app')],check=True)
             (staging/'Applications').symlink_to('/Applications',target_is_directory=True)
             subprocess.run(['hdiutil','create','-ov','-volname','Muuri','-srcfolder',str(staging),
-                            '-format','UDZO',str(OUTPUT/'Muuri-macOS-arm64-teste.dmg')],check=True)
+                            '-format','UDZO',str(OUTPUT/'Muuri-macOS-arm64.dmg')],check=True)
         subprocess.run([sys.executable,str(ROOT/'packaging/smoke_macos.py'),'--dmg',
-                        str(OUTPUT/'Muuri-macOS-arm64-teste.dmg')],check=True)
+                        str(OUTPUT/'Muuri-macOS-arm64.dmg')],check=True)
     write_hashes()
     print('Aplicativo:',app)
     print('Pacotes:',OUTPUT)

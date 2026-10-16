@@ -602,7 +602,7 @@ class PanelTests(unittest.TestCase):
             self.panel.preview_direction.setCurrentIndex(1)
             self.assertEqual(self.panel.preview.direction, -1)
             self.panel.preview_direction.setCurrentIndex(0)
-        for key, height in (("Very Small", 20), ("Small", 40), ("Original", 64),
+        for key, height in (("Very Small", 20), ("Small", 40), ("Original", 128),
                             ("Medium", 125), ("Big", 150), ("Really Big", 200)):
             self.panel.size.setCurrentIndex(self.panel.size.findData(key))
             self.assertEqual(self.panel.preview.frames[0].height(), height)

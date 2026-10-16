@@ -17,7 +17,7 @@ class PetWindow(QtWidgets.QWidget):
                  | QtCore.Qt.WindowType.WindowDoesNotAcceptFocus)
         config = config_io.read_json(config_io.CONFIG_FILE)
         self.layer = config.get("layer", "front")
-        # Cocoa owns the layer; Qt's top hint would reset it to modal-panel level.
+        # Cocoa owns the layer; Qt's top hint can reset it to modal-panel level.
         if sys.platform != "darwin":
             flags |= (QtCore.Qt.WindowType.WindowStaysOnTopHint if self.layer == "front"
                       else QtCore.Qt.WindowType.WindowStaysOnBottomHint)
@@ -48,8 +48,9 @@ class PetWindow(QtWidgets.QWidget):
         import objc
         view = objc.objc_object(c_void_p=c_void_p(int(self.winId())))
         window = view.window()
-        level = AppKit.NSFloatingWindowLevel if self.layer == "front" else AppKit.NSNormalWindowLevel - 1
-        window.setLevel_(level)
+        # Keep pets above normal app windows even when another app is active.
+        # The layer preference remains relevant on Windows; macOS pets stay on top.
+        window.setLevel_(AppKit.NSStatusWindowLevel)
         window.setHidesOnDeactivate_(False)
         # Join ordinary desktops; do not request the full-screen auxiliary role.
         window.setCollectionBehavior_(AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces

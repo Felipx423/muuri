@@ -6,7 +6,7 @@ from PIL import Image
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from . import config_io
-from .pets import PETS_DATA
+from .pets import PETS_DATA, states_for
 from .petworker import MAX_PETS
 from .version import APP_VERSION
 
@@ -17,7 +17,7 @@ SIZES = [("Very Small", "Bem pequeno", 20), ("Small", "Pequeno", 40),
 STATE_NAMES = {"idle": "Parada", "walk": "Andando", "walk_fast": "Trotando",
                "run": "Correndo", "lie": "Descansando", "swipe": "Reação",
                "drag": "Sendo arrastada", "fly": "Voando"}
-FIELDS = ("enabled", "colors", "size", "draggable", "physics_enabled", "movement_multiplier", "animation_multiplier", "count")
+FIELDS = ("enabled", "colors", "size", "draggable", "physics_enabled", "movement_multiplier", "animation_multiplier", "count", "style")
 from .panel_style import STYLE
 
 
@@ -156,9 +156,9 @@ class Preview(QtWidgets.QWidget):
         self.timer.timeout.connect(self.advance)
         self.timer.start()
 
-    def configure(self, species, color, state, size, fps, movement, animation, direction):
+    def configure(self, species, color, state, size, fps, movement, animation, direction, style="pixel"):
         data = PETS_DATA[species]
-        path = data["states"][color][state]
+        path = states_for(species, color, style)[state]
         if path not in self.cache:
             with Image.open(config_io.BASE_DIR / path) as gif:
                 frames = []
@@ -323,7 +323,7 @@ class SettingsPanel(QtWidgets.QWidget):
         self.species_list.setObjectName("collection")
         self.species_list.setAccessibleName("Coleção de pets; selecione para ver os ajustes")
         self.species_list.setItemDelegate(PetCardDelegate(self.species_list))
-        featured = ("muuri", "fefo", "cato", "manu", "eco")
+        featured = ("muuri", "fefo", "cato", "manu", "eco", "voltinha")
         for species in sorted(PETS_DATA, key=lambda name: (featured.index(name) if name in featured else len(featured), name)):
             item = QtWidgets.QListWidgetItem(pet_icon(species), species.capitalize())
             item.setData(QtCore.Qt.ItemDataRole.UserRole, species)
@@ -451,6 +451,11 @@ class SettingsPanel(QtWidgets.QWidget):
         self.size = QtWidgets.QComboBox()
         self.size.setAccessibleName("Tamanho do pet")
         appearance_form.addWidget(self.size)
+        self.style_label = label("Estilo visual")
+        appearance_form.addWidget(self.style_label)
+        self.style_combo = QtWidgets.QComboBox()
+        self.style_combo.setAccessibleName("Estilo visual do pet")
+        appearance_form.addWidget(self.style_combo)
         appearance_form.addWidget(label("Cores ativas"))
         self.colors_box = QtWidgets.QWidget()
         self.colors_layout = QtWidgets.QGridLayout(self.colors_box)
@@ -534,6 +539,7 @@ class SettingsPanel(QtWidgets.QWidget):
         self.animation.valueChanged.connect(self.changed)
         self.layer_combo.currentIndexChanged.connect(self.layer_changed)
         self.preview_color.currentIndexChanged.connect(self.color_preview_changed)
+        self.style_combo.currentIndexChanged.connect(self.changed)
         self.preview_state.currentIndexChanged.connect(self.update_preview)
         self.preview_direction.currentIndexChanged.connect(self.update_preview)
         self.species_list.currentItemChanged.connect(self.selection_changed)
@@ -604,6 +610,7 @@ class SettingsPanel(QtWidgets.QWidget):
                         '<p>Muuri: design de referência fornecido pelo usuário; animações adaptadas para DeskPets.</p>'
                         '<p>Manu: design de referência fornecido pelo usuário; animações adaptadas para DeskPets com geração de imagens.</p>'
                         '<p>Eco: referência visual fornecida pelo usuário; base preparada com geração de imagens e animações feitas a partir da mesma base.</p>'
+                        '<p>Voltinha: referência visual fornecida pelo usuário; base preparada com geração de imagens e animações feitas a partir da mesma base.</p>'
                         '<p>Fefo: personagem integrado a partir da referência canônica fefo.svg fornecida pelo usuário.</p>'
                         '<p>Cato: personagem integrado a partir dos materiais de referência fornecidos pelo usuário.</p>'
                         '<h3>Licença MIT do DeskPets</h3><pre style="white-space: pre-wrap">'
@@ -734,7 +741,8 @@ class SettingsPanel(QtWidgets.QWidget):
         interactive = 'drag' in data['states'][data['colors'][0]]
         return next((e for e in self.draft["pets"] if e["species"] == self.species),
                     {"species": self.species, "colors": [], "enabled": False, "size": "Original",
-                     "draggable": interactive, "settings_clicks": 4 if interactive else 0})
+                     "draggable": interactive, "settings_clicks": 4 if interactive else 0,
+                     **({"style": next(iter(data.get("styles", {})), "pixel")} if data.get("styles") else {})})
 
     def select(self, species):
         # Opening the panel or selecting a pet programmatically must not enable it.
@@ -792,6 +800,16 @@ class SettingsPanel(QtWidgets.QWidget):
         self.physics.setToolTip(PETS_DATA[self.species].get("physics", {}).get(
             "description", "Ligada: gravidade, arremesso e quique leve. Desligada: o pet permanece onde você o soltar."))
         self.physics_note.setText(self.physics.toolTip())
+        self.style_combo.blockSignals(True)
+        self.style_combo.clear()
+        styles = PETS_DATA[self.species].get("styles", {})
+        for style, style_data in styles.items():
+            self.style_combo.addItem(style_data.get("label", style.capitalize()), style)
+        self.style_label.setVisible(len(styles) > 1)
+        self.style_combo.setVisible(len(styles) > 1)
+        if styles:
+            self.style_combo.setCurrentIndex(max(0, self.style_combo.findData(entry.get("style", next(iter(styles))))))
+        self.style_combo.blockSignals(False)
         while self.colors_layout.count():
             check = self.colors_layout.takeAt(0).widget()
             check.hide()
@@ -812,7 +830,8 @@ class SettingsPanel(QtWidgets.QWidget):
         self.preview_color.setVisible(multiple_colors)
         self.preview_color_label.setVisible(multiple_colors)
         color = self.preview_color.currentData()
-        path = next(iter(PETS_DATA[self.species]["states"][color].values()))
+        style = self.style_combo.currentData() or "pixel"
+        path = next(iter(states_for(self.species, color, style).values()))
         with Image.open(config_io.BASE_DIR / path) as gif:
             original_height = gif.height
         self.size.clear()
@@ -833,7 +852,8 @@ class SettingsPanel(QtWidgets.QWidget):
         previous = self.preview_state.currentData()
         self.preview_state.blockSignals(True)
         self.preview_state.clear()
-        for state in PETS_DATA[self.species]["states"][self.preview_color.currentData()]:
+        style = self.style_combo.currentData() or "pixel"
+        for state in states_for(self.species, self.preview_color.currentData(), style):
             self.preview_state.addItem(STATE_NAMES.get(state, state.replace("_", " ").capitalize()), state)
         self.pet_badge.setText(self.preview_color.currentText())
         self.pet_badge.setToolTip(f"{self.preview_state.count()} animações disponíveis")
@@ -849,7 +869,8 @@ class SettingsPanel(QtWidgets.QWidget):
         try:
             self.preview.configure(self.species, self.preview_color.currentData(), self.preview_state.currentData(),
                                    self.size.currentData(), self.entry().get("fps", 8), self.movement.value()/100,
-                                   self.animation.value()/100, self.preview_direction.currentData())
+                                   self.animation.value()/100, self.preview_direction.currentData(),
+                                   self.style_combo.currentData() or "pixel")
             self.preview_info.setText("Explore a prévia. Seu desktop só muda ao aplicar.")
             self.preview_info.setToolTip(f"Canvas: {self.preview.frames[0].height()} px · movimento: {self.preview.velocity:.1f} px/s".replace(".", ","))
             self.flip_button.setToolTip(self.preview_direction.currentText())
@@ -878,6 +899,8 @@ class SettingsPanel(QtWidgets.QWidget):
                      size=self.size.currentData(), draggable=self.draggable.isChecked(),
                      physics_enabled=self.physics.isChecked(),
                      movement_multiplier=self.movement.value()/100, animation_multiplier=self.animation.value()/100)
+        if PETS_DATA[self.species].get("styles"):
+            entry["style"] = self.style_combo.currentData() or "pixel"
         before = sum(self.active_count(e) for e in self.draft['pets'])
         after = sum(self.active_count(e) for e in self.draft['pets'] if e['species'] != self.species) + self.active_count(entry)
         if after > MAX_PETS and after > before:
@@ -945,6 +968,31 @@ class SettingsPanel(QtWidgets.QWidget):
         elif not valid_quantity:
             self.status.setText(f"Informe uma quantidade inteira de 0 a {MAX_PETS}.")
         self.filter_collection()
+
+    def sync_tray_changes(self, document, before, visibility=None):
+        """Accept immediate tray actions without applying unrelated panel edits."""
+        old_entries = {entry["species"]: entry for entry in self.original["pets"]}
+        saved_entries = {entry["species"]: entry for entry in before["pets"]}
+        draft_entries = {entry["species"]: entry for entry in self.draft["pets"]}
+        for entry in document["pets"]:
+            old = old_entries.get(entry["species"], {})
+            saved = saved_entries.get(entry["species"], {})
+            target = draft_entries.get(entry["species"])
+            if target is None:
+                target = copy.deepcopy(entry)
+                self.draft["pets"].append(target)
+            for key, value in entry.items():
+                if target.get(key) == old.get(key) or saved.get(key) != value:
+                    target[key] = copy.deepcopy(value)
+        # An explicit tray command also overrides pending visibility edits.
+        for entry in self.draft["pets"]:
+            if visibility and entry["species"] in visibility:
+                entry["enabled"] = visibility[entry["species"]]
+        for key, value in document.items():
+            if key != "pets" and (self.draft.get(key) == self.original.get(key) or before.get(key) != value):
+                self.draft[key] = copy.deepcopy(value)
+        self.original = copy.deepcopy(document)
+        self.select_species(self.species_list.currentItem())
 
     def discard(self):
         self.draft = copy.deepcopy(self.original)

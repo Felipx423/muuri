@@ -10,6 +10,7 @@ from .panel import SettingsPanel
 from .desktop import Desktop, IS_WINDOWS
 from . import config_io
 from .update_controller import UpdateController
+from .tray_pets import TrayPets
 
 BASE_DIR = os.path.dirname(__file__)
 LOGO_DIR = os.path.join(BASE_DIR, "media", "muuri", "muuri.ico")
@@ -86,6 +87,11 @@ class MainWindow(QtWidgets.QMainWindow):
             tray_menu = QtWidgets.QMenu(self)
             tray_menu.addAction(show_action)
             tray_menu.addAction(refresh_action)
+            self.tray_pets = TrayPets(self)
+            tray_menu.addAction(self.tray_pets.remove_all_action)
+            tray_menu.addMenu(self.tray_pets.favorites_menu)
+            tray_menu.aboutToShow.connect(self.tray_pets.update_actions)
+            tray_menu.addSeparator()
             tray_menu.addAction(self.update_action)
             tray_menu.addSeparator()
             tray_menu.addAction(quit_action)
@@ -179,6 +185,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.worker = PetWorker(self.pets)
             self.worker.frame_ready.connect(self.render_pet)
             self.worker.start()
+            self.tray_pets.update_actions()
             return True
         except Exception as error:
             print(error)
