@@ -279,13 +279,16 @@ class PanelTests(unittest.TestCase):
         self.assertGreater(pet.y, 100)
         self.assertEqual(win32gui.GetWindowRect(pet.hwnd)[:2], (int(pet.x), int(pet.y)))
 
-    def test_select_and_apply_adds_pet_and_supplies_default_color(self):
+    def test_selection_only_browses_then_explicit_add_supplies_default_color(self):
         before = self.list_path.read_bytes()
         old_pet = self.pet()
         for index in range(self.panel.species_list.count()):
             if self.panel.species_list.item(index).data(QtCore.Qt.ItemDataRole.UserRole) == "clippy":
                 self.panel.species_list.setCurrentRow(index)
                 break
+        self.assertFalse(self.panel.is_dirty())
+        self.assertFalse(self.panel.enabled.isChecked())
+        self.panel.add_button.click()
         self.assertTrue(self.panel.is_dirty())
         self.assertTrue(self.panel.enabled.isChecked())
         self.assertTrue(any(check.isChecked() for check in self.panel.color_checks.values()))
@@ -300,6 +303,62 @@ class PanelTests(unittest.TestCase):
         muuri = next(e for e in saved["pets"] if e["species"] == "muuri")
         self.assertEqual(muuri["size"], "Original")
         self.assertEqual(muuri["settings_clicks"], 4)
+
+    def test_search_active_filter_and_gesture_reveal_do_not_edit_preferences(self):
+        before = self.list_path.read_bytes()
+        self.panel.search.setText("fEfO")
+        visible = [self.panel.species_list.item(row).text()
+                   for row in range(self.panel.species_list.count())
+                   if not self.panel.species_list.item(row).isHidden()]
+        self.assertEqual(visible, ["Fefo"])
+        self.panel.search.setText("pet que não existe")
+        self.assertFalse(self.panel.empty_box.isHidden())
+        self.panel.select("muuri")
+        self.assertEqual(self.panel.search.text(), "")
+        self.assertFalse(self.panel.is_dirty())
+        self.panel.view_group.button(1).click()
+        self.assertEqual(self.panel.view_group.checkedId(), 1)
+        self.assertEqual(self.panel.total_label.text(), "1 pets na tela")
+        self.panel.remove_species_button.click()
+        # Applied pets stay visible until their pending removal is confirmed.
+        current = self.panel.species_list.currentItem()
+        self.assertFalse(current.isHidden())
+        from deskpets.panel import STATUS_ROLE
+        self.assertEqual(current.data(STATUS_ROLE), "Será removido")
+        self.assertEqual(self.panel.total_label.text(), "1 pets na tela")
+        self.panel.discard()
+        self.assertFalse(self.panel.is_dirty())
+        self.assertEqual(self.list_path.read_bytes(), before)
+
+    def test_preview_pause_direction_and_reset_speeds_are_independent(self):
+        before = self.list_path.read_bytes()
+        self.panel.pause_button.click()
+        self.assertTrue(self.panel.preview.paused)
+        index = self.panel.preview.frame_index
+        self.panel.preview.advance()
+        self.assertEqual(self.panel.preview.frame_index, index)
+        self.panel.flip_button.click()
+        self.assertEqual(self.panel.preview.direction, -1)
+        self.assertFalse(self.panel.is_dirty())
+        self.panel.movement.setValue(150)
+        self.panel.animation.setValue(75)
+        self.panel.reset_speed_button.click()
+        self.assertEqual((self.panel.movement.value(), self.panel.animation.value()), (100, 100))
+        self.assertEqual(self.list_path.read_bytes(), before)
+
+    def test_compact_navigation_keeps_apply_and_pet_actions_visible(self):
+        self.window.resize(900, 620)
+        self.window.show_settings_for_pet("muuri")
+        self.app.processEvents()
+        self.assertEqual(self.panel.sidebar.height(), 62)
+        self.assertTrue(self.panel.add_button.isVisible())
+        for widget in (self.panel.apply_button, self.panel.add_button, self.panel.remove_species_button):
+            point = widget.mapTo(self.panel, QtCore.QPoint(0, 0))
+            self.assertTrue(self.panel.rect().contains(QtCore.QRect(point, widget.size())))
+        self.panel.tabs.setCurrentIndex(2)
+        self.assertFalse(self.panel.remove_all_button.isVisible())
+        self.assertIn("Minniti Julien", self.panel.credits_browser.toPlainText())
+        self.assertIn("MIT License", self.panel.credits_browser.toPlainText())
 
     def test_discard_selection_and_click_same_row_again(self):
         before = self.list_path.read_bytes()
