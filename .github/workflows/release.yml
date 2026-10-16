@@ -2,7 +2,7 @@ name: Build and publish Muuri release
 
 on:
   push:
-    branches: ["feat/tray-favorites"]
+    tags: ["muuri-v*"]
 
 permissions:
   contents: read
@@ -88,7 +88,7 @@ jobs:
           path: release-assets/macos
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: muuri-v1.4.0
           name: Muuri 1.4.0 — Voltinha, novo visual e favoritos
           target_commitish: ${{ github.sha }}
           draft: false
