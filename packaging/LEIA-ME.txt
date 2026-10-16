@@ -10,10 +10,21 @@ Arraste com o mouse. Ative a física no painel se quiser gravidade e arremesso.
 Clique em Aplicar para salvar. A bandeja, perto do relógio, tem a opção Sair.
 Só uma instância abre por sessão, mesmo clicando várias vezes no atalho.
 Ative várias espécies no painel e ajuste Quantidade para criar cópias.
-Os cartões preservam os demais pets ativos; Aplicar confirma as mudanças.
-Use Remover 1, Remover espécie ou Remover todos os pets e clique em Aplicar.
+Selecionar um cartão abre os ajustes. Use Adicionar à tela para ativar o pet.
+Os demais pets ativos são preservados; Aplicar alterações confirma as mudanças.
+Use o botão −, Remover espécie ou Remover todos e clique em Aplicar alterações.
 Quantidade zero também remove a espécie da área de trabalho.
 Muuri, Fefo, Cato e Manu ficam disponíveis, além dos pets originais.
+
+ATUALIZAR
+A partir da versão 1.2.0, o Muuri instalado procura novas versões ao abrir
+e a cada seis horas enquanto estiver aberto. O aviso aparece na bandeja.
+Clique em Atualizar agora para baixar, instalar e reabrir automaticamente.
+Você também pode usar Preferências > Atualizações ou o menu da bandeja.
+O download é validado por SHA-256. Suas preferências são preservadas.
+Quem usa uma versão anterior precisa instalar a 1.2.0 uma vez para receber
+as próximas atualizações pelo aplicativo. Não é necessário reinstalar Python.
+Sem internet, seus pets continuam funcionando normalmente.
 
 REMOVER
 Use Configurações do Windows > Aplicativos > Muuri > Desinstalar.

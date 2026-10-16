@@ -7,6 +7,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 from . import config_io
 from .pets import PETS_DATA
+from .version import APP_VERSION
 
 
 SIZES = [("Very Small", "Bem pequeno", 20), ("Small", "Pequeno", 40),
@@ -568,6 +569,14 @@ class SettingsPanel(QtWidgets.QWidget):
         layout.addWidget(label("Sempre por perto", "sectionTitle"))
         layout.addWidget(label("Abra os ajustes pelo ícone da bandeja ou com quatro cliques rápidos nos pets que têm esse gesto habilitado. São quatro cliques em até 1,5 segundo, sem arrastar; funciona mesmo com o arraste desligado.", "muted", True))
         layout.addWidget(label("Fechar este painel mantém os pets ativos. Para encerrar o aplicativo, use Sair no menu da bandeja.", "muted", True))
+        layout.addSpacing(16)
+        layout.addWidget(label("Atualizações", "sectionTitle"))
+        layout.addWidget(label(f"Muuri {APP_VERSION}", "muted"))
+        self.update_status_label = label("A versão instalada no Windows procura atualizações ao abrir. No macOS, consulte os downloads do projeto.", "muted", True)
+        layout.addWidget(self.update_status_label)
+        self.update_button = QtWidgets.QPushButton("Verificar atualizações")
+        self.update_button.setMaximumWidth(300)
+        layout.addWidget(self.update_button)
         layout.addStretch()
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -585,7 +594,7 @@ class SettingsPanel(QtWidgets.QWidget):
         credits.setOpenExternalLinks(True)
         license_path = config_io.BASE_DIR.parent / "LICENSE"
         license_text = license_path.read_text(encoding="utf-8") if license_path.exists() else "Consulte LICENSE na distribuição original."
-        credits.setHtml('<h2>Créditos e código aberto</h2><p>DeskPets por Minniti Julien (Jumitti).</p>'
+        credits.setHtml(f'<h2>Muuri {APP_VERSION}</h2><h3>Créditos e código aberto</h3><p>DeskPets por Minniti Julien (Jumitti).</p>'
                         '<p><a href="https://github.com/Jumitti/DeskPets">Projeto original</a> · '
                         '<a href="https://github.com/Jumitti/DeskPets#credits">Créditos originais</a></p>'
                         '<p>Inspirado em <a href="https://github.com/tonybaloney/vscode-pets">vscode-pets</a>, '

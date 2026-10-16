@@ -31,7 +31,7 @@ espécies, licenças e código Python são preservados. A compressão é LZMA2/u
 
 ## Identidade e compatibilidade
 
-O pacote Windows usa a versão 1.1.1, nome Muuri, executável Muuri.exe,
+O pacote Windows usa a versão 1.2.0, nome Muuri, executável Muuri.exe,
 instalador Muuri-Setup.exe e o ícone próprio existente. Nenhum publisher foi
 inventado: o campo AppPublisher foi omitido. Os créditos continuam no guia,
 no painel e na licença original. A versão 1.0.1 publicada não é substituída
@@ -43,3 +43,23 @@ a instalação anterior sem criar outra entrada. O mutex PetlayerDeskPetsMuuri
 deskpets e seu entry point original continuam compatíveis; esses nomes não
 são a identidade visível do aplicativo. O AppUserModelID visível ao Windows
 passa a Muuri; a integração com a barra de tarefas pode formar um novo grupo.
+
+## Atualizações pelo aplicativo
+
+O Windows instalado verifica a última release estável de Felipx423/muuri ao
+iniciar e a cada seis horas. Também há uma ação na bandeja e em Preferências.
+O download exige os assets Muuri-Setup.exe e MUURI-SHA256.txt, com linhas no
+formato SHA-256 seguido de dois espaços e o nome do arquivo. Não publique
+uma release como latest antes de enviar ambos os arquivos.
+
+O instalador é baixado para o cache do usuário, validado por tamanho e SHA-256
+e verificado novamente antes da execução. Um helper do PowerShell do Windows
+aguarda o processo original sair, executa o Inno Setup na mesma pasta, sem
+reiniciar o computador, e reabre Muuri.exe. Não há mudança na política de
+execução do sistema. Em caso de falha, o helper informa o erro e mantém
+update.log junto ao download para diagnóstico.
+
+Mantenha AppId, DefaultDirName e as regras onlyifdoesntexist dos JSONs.
+Atualize deskpets/version.py e AppVersion em muuri.iss a cada release do Muuri.
+Execução por código-fonte não instala atualizações. No macOS, a ação abre
+os downloads; a substituição automática do .app não faz parte desta versão.

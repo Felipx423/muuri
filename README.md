@@ -15,6 +15,12 @@ Muuri é um desktop pet para Windows com animações, interação, arraste, fís
 - Painel em português, seleção de outros pets e ícone na bandeja do Windows.
 - Várias espécies ao mesmo tempo e quantidade de cópias por espécie/cor, sem teto fixo de pets no engine.
 - Uma instância por sessão e preferências salvas entre execuções.
+- Atualizações pelo próprio aplicativo no Windows, com download verificado e preferências preservadas.
+
+Na versão 1.2.0 ou superior, use **Preferências → Atualizações** ou o aviso da
+bandeja para atualizar sem procurar e baixar o instalador no navegador.
+Quem usa uma versão anterior precisa instalar a 1.2.0 uma vez.
+Veja [como funcionam as atualizações](UPDATES.md).
 
 ## 📦 Instalação
 

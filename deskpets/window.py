@@ -9,6 +9,7 @@ from .petworker import PetWorker, load_pets
 from .panel import SettingsPanel
 from .desktop import Desktop, IS_WINDOWS
 from . import config_io
+from .update_controller import UpdateController
 
 BASE_DIR = os.path.dirname(__file__)
 LOGO_DIR = os.path.join(BASE_DIR, "media", "muuri", "muuri.ico")
@@ -54,6 +55,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(u"Muuri")
 
             self.panel = SettingsPanel(self)
+            self.updater = UpdateController(self)
             self.setCentralWidget(self.panel)
             self.panel.preview.timer.stop()
             self.setMinimumSize(900, 620)
@@ -71,6 +73,8 @@ class MainWindow(QtWidgets.QMainWindow):
             quit_action = QtGui.QAction("Sair", self)
             show_action.triggered.connect(self.show_window)
             refresh_action.triggered.connect(self.start_refresh)
+            self.update_action = QtGui.QAction("Verificar atualizações", self)
+            self.update_action.triggered.connect(self.updater.check_manually)
             quit_action.setMenuRole(QtGui.QAction.MenuRole.QuitRole)
             quit_action.triggered.connect(self.request_quit)
             self.quit_action = quit_action
@@ -82,11 +86,13 @@ class MainWindow(QtWidgets.QMainWindow):
             tray_menu = QtWidgets.QMenu(self)
             tray_menu.addAction(show_action)
             tray_menu.addAction(refresh_action)
+            tray_menu.addAction(self.update_action)
             tray_menu.addSeparator()
             tray_menu.addAction(quit_action)
             self.tray_icon.setContextMenu(tray_menu)
             self.tray_icon.setToolTip("Muuri")
             self.tray_icon.activated.connect(self.tray_activated)
+            self.tray_icon.messageClicked.connect(self.updater.offer_install)
             self.tray_icon.show()
 
             # Pets
@@ -187,6 +193,9 @@ class MainWindow(QtWidgets.QMainWindow):
             draw_pet_frame(pet, frame)
 
     def closeEvent(self, event):
+        if getattr(self, "update_quit", False):
+            event.accept()
+            return
         event.ignore()
         if self.panel.allow_close():
             self.hide()
@@ -220,6 +229,7 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QApplication.instance().quit()
 
     def shutdown(self):
+        self.updater.shutdown()
         self.drag_timer.stop()
         self.panel.preview.timer.stop()
         if self.worker:

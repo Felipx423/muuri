@@ -24,6 +24,7 @@ def main():
         window.hide()
         if not window.start_refresh():
             raise RuntimeError("Não foi possível iniciar os pets.")
+        window.updater.start()
         sys.exit(app.exec())
     except Exception as e:
         print(e)
