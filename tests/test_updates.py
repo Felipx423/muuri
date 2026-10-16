@@ -13,7 +13,9 @@ from deskpets import updates
 from deskpets.update_controller import UpdateController
 
 
-def release_data(version="1.3.0", payload=b"verified installer"):
+def release_data(version=None, payload=b"verified installer"):
+    # Keep update fixtures newer than the app when preparing a new release.
+    version = version or f"{int(updates.APP_VERSION.split('.')[0])+1}.0.0"
     tag = "muuri-v" + version
     return dict(tag_name=tag, draft=False, prerelease=False, assets=[
         dict(name=name, size=len(payload), browser_download_url=f"https://github.com/{updates.REPOSITORY}/releases/download/{tag}/{name}")
@@ -27,7 +29,7 @@ class Response(io.BytesIO):
 
 class UpdateTests(unittest.TestCase):
     def test_only_newer_stable_releases_with_both_official_assets(self):
-        self.assertEqual(updates.parse_release(release_data(), "1.2.0").version, "1.3.0")
+        self.assertEqual(updates.parse_release(release_data("1.3.0"), "1.2.0").version, "1.3.0")
         self.assertIsNone(updates.parse_release(release_data("1.2.0"), "1.2.0"))
         self.assertIsNone(updates.parse_release(release_data("1.1.1"), "1.2.0"))
         for flag in ("draft", "prerelease"):
