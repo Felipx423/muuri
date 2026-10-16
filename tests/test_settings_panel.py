@@ -318,14 +318,14 @@ class PanelTests(unittest.TestCase):
         self.assertFalse(self.panel.is_dirty())
         self.panel.view_group.button(1).click()
         self.assertEqual(self.panel.view_group.checkedId(), 1)
-        self.assertEqual(self.panel.total_label.text(), "1 pets na tela")
+        self.assertEqual(self.panel.total_label.text(), "1/6 pets na tela")
         self.panel.remove_species_button.click()
         # Applied pets stay visible until their pending removal is confirmed.
         current = self.panel.species_list.currentItem()
         self.assertFalse(current.isHidden())
         from deskpets.panel import STATUS_ROLE
         self.assertEqual(current.data(STATUS_ROLE), "Será removido")
-        self.assertEqual(self.panel.total_label.text(), "1 pets na tela")
+        self.assertEqual(self.panel.total_label.text(), "1/6 pets na tela")
         self.panel.discard()
         self.assertFalse(self.panel.is_dirty())
         self.assertEqual(self.list_path.read_bytes(), before)
@@ -415,12 +415,19 @@ class PanelTests(unittest.TestCase):
                 positions[key] = pet.x, pet.y, pet.state.direction
             self.panel.select("cato")
             self.panel.quantity.setText("3")
+            self.assertEqual(self.panel.quantity.text(), "2")
+            self.assertIn("Limite de 6", self.panel.status.text())
+            self.assertFalse(self.panel.add_one_button.isEnabled())
+            self.panel.select("manu")
+            self.panel.quantity.setText("1")
+            self.panel.select("cato")
+            self.panel.quantity.setText("3")
             old_worker = self.window.worker
             self.assertTrue(self.panel.apply())
             self.window.worker.stop()
             self.assertTrue(self.window.worker.wait(3000))
             self.assertFalse(old_worker.isRunning())
-            self.assertEqual(len(self.window.pets), 7)
+            self.assertEqual(len(self.window.pets), 6)
             for pet in self.window.pets:
                 key = pet.species, pet.color, pet.instance_index
                 if key in positions:
@@ -430,14 +437,14 @@ class PanelTests(unittest.TestCase):
             self.window.worker.stop()
             self.assertTrue(self.window.worker.wait(3000))
             self.assertEqual(Counter(p.species for p in self.window.pets),
-                             {"muuri": 1, "manu": 2, "fefo": 1})
+                             {"muuri": 1, "manu": 1, "fefo": 1})
             other = MainWindow(self.app)
             try:
                 self.assertTrue(other.start_refresh())
                 other.worker.stop()
                 self.assertTrue(other.worker.wait(3000))
                 self.assertEqual(Counter(p.species for p in other.pets),
-                                 {"muuri": 1, "manu": 2, "fefo": 1})
+                                 {"muuri": 1, "manu": 1, "fefo": 1})
                 other.panel.select("cato")
                 self.assertEqual(other.panel.quantity.text(), "3")
                 self.assertFalse(other.panel.enabled.isChecked())
@@ -445,18 +452,85 @@ class PanelTests(unittest.TestCase):
                 other.shutdown()
                 other.deleteLater()
 
-    def test_quantity_accepts_large_integers_and_rejects_invalid_text(self):
+    def test_quantity_accepts_six_and_rejects_out_of_range_or_invalid_text(self):
         before = self.list_path.read_bytes()
-        for text in ("", "-1", "1.5"):
+        for text in ("", "-1", "1.5", "7", "12345678901234567890"):
             self.panel.quantity.setText(text)
             self.assertFalse(self.panel.apply())
             self.assertEqual(self.list_path.read_bytes(), before)
-        self.panel.quantity.setText("12345678901234567890")
+        self.panel.quantity.setText("6")
         self.assertTrue(self.panel.quantity.hasAcceptableInput())
-        self.assertEqual(self.panel.entry()["count"], 12345678901234567890)
+        self.assertEqual(self.panel.entry()["count"], 6)
+        self.assertFalse(self.panel.add_one_button.isEnabled())
+        self.panel.add_one()
+        self.assertEqual(self.panel.quantity.text(), "6")
         self.panel.discard()
         self.assertEqual(self.panel.quantity.text(), "1")
         self.assertFalse(self.panel.is_dirty())
+
+    def test_limit_counts_colors_and_blocks_seventh_activation(self):
+        from collections import Counter
+        before = self.list_path.read_bytes()
+        self.panel.quantity.setText('5')
+        self.panel.select('dog')
+        self.panel.activate_selected()
+        self.assertEqual(sum(self.panel.active_count(e) for e in self.panel.draft['pets']), 6)
+        self.assertFalse(self.panel.add_button.isEnabled())
+        extra = next(c for c,w in self.panel.color_checks.items() if not w.isChecked())
+        self.panel.color_checks[extra].setChecked(True)
+        self.assertFalse(self.panel.color_checks[extra].isChecked())
+        self.assertIn('Limite de 6', self.panel.status.text())
+        self.panel.select('eco')
+        self.panel.activate_selected()
+        self.assertFalse(self.panel.enabled.isChecked())
+        self.assertEqual(self.list_path.read_bytes(), before)
+        self.panel.select('muuri')
+        self.panel.quantity.setText('4')
+        self.panel.select('dog')
+        self.panel.color_checks[extra].setChecked(True)
+        self.assertTrue(self.panel.color_checks[extra].isChecked())
+        with patch.object(petworker.PetWorker, 'run', lambda worker: None):
+            self.assertTrue(self.panel.apply())
+            self.window.worker.stop()
+            self.assertTrue(self.window.worker.wait(3000))
+        self.assertEqual(Counter(p.species for p in self.window.pets), {'muuri':4,'dog':2})
+        self.assertEqual(self.panel.total_label.text(), '6/6 pets na tela')
+
+    def test_legacy_excess_preferences_start_six_and_can_be_reduced(self):
+        legacy = copy.deepcopy(self.data)
+        next(e for e in legacy['pets'] if e['species']=='muuri')['count'] = 12
+        self.list_path.write_text(json.dumps(legacy),encoding='utf-8')
+        before = self.list_path.read_bytes()
+        with patch.object(petworker.PetWorker, 'run', lambda worker: None):
+            self.assertTrue(self.window.start_refresh())
+            self.window.worker.stop()
+            self.assertTrue(self.window.worker.wait(3000))
+            self.assertEqual(len(self.window.pets), 6)
+            self.assertEqual(self.list_path.read_bytes(), before)
+            self.panel.original = legacy
+            self.panel.discard()
+            self.assertEqual(self.panel.total_label.text(), '6/6 pets na tela')
+            self.assertFalse(self.panel.apply_button.isEnabled())
+            self.assertTrue(self.panel.remove_species_button.isEnabled())
+            self.panel.quantity.setText('6')
+            self.assertTrue(self.panel.apply())
+            self.window.worker.stop()
+            self.assertTrue(self.window.worker.wait(3000))
+        self.assertEqual(len(self.window.pets), 6)
+        self.assertEqual(next(e for e in config_io.read_json(self.list_path)['pets'] if e['species']=='muuri')['count'], 6)
+
+    def test_apply_rechecks_external_settings_before_saving_limit(self):
+        self.panel.quantity.setText('6')
+        external = config_io.read_json(self.list_path)
+        eco = next(e for e in external['pets'] if e['species']=='eco')
+        eco.update(enabled=True,colors=['green'],count=1)
+        self.list_path.write_text(json.dumps(external),encoding='utf-8')
+        before = self.list_path.read_bytes()
+        with patch.object(QtWidgets.QMessageBox, 'warning'):
+            self.assertFalse(self.panel.apply())
+        self.assertEqual(self.list_path.read_bytes(), before)
+        self.assertEqual(len(self.window.pets), 1)
+        self.assertIn('Limite de 6', self.panel.status.text())
 
     def test_remove_copies_species_and_all_pets_then_add_again(self):
         from collections import Counter

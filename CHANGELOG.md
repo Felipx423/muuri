@@ -1,5 +1,13 @@
 # Changelog
 
+## Muuri [1.3.0]
+### Added
+- Eco, com sete animações transparentes de 128 px e locomoção lateral.
+- Limite global de seis pets, com contador e bloqueio de novas adições no painel.
+### Changed
+- Configurações antigas acima do limite exibem somente os primeiros seis pets, sem reescrever preferências automaticamente.
+- Instalação e atualização pelo aplicativo preservam as preferências existentes.
+
 ## [1.2.0]
 ### Added
 - Settings panel
