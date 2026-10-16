@@ -31,7 +31,7 @@ jobs:
         run: |
           python packaging/build_windows.py
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging\muuri.iss
-          $output = Join-Path (Split-Path $env:GITHUB_WORKSPACE -Parent) "outputs"
+          $output = Join-Path (Split-Path (Split-Path $env:GITHUB_WORKSPACE -Parent) -Parent) "outputs"
           $stage = Join-Path $env:GITHUB_WORKSPACE "release-assets\windows"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
           Copy-Item (Join-Path $output "Muuri-Setup.exe") $stage
