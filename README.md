@@ -13,7 +13,7 @@ Muuri é um desktop pet para Windows com animações, interação, arraste, fís
 - Física opcional com gravidade, arremesso e quique.
 - Tamanhos e velocidades de movimento e animação independentes.
 - Painel em português, seleção de outros pets e ícone na bandeja do Windows.
-- Várias espécies ao mesmo tempo e quantidade de cópias por espécie/cor, sem teto fixo de pets no engine.
+- Várias espécies ao mesmo tempo, com limite de **6 pets no total**, contando todas as cópias e cores.
 - Uma instância por sessão e preferências salvas entre execuções.
 - Atualizações pelo próprio aplicativo no Windows, com download verificado e preferências preservadas.
 
@@ -39,6 +39,7 @@ Para **macOS Apple Silicon (M1 ou posterior)**, baixe o DMG na [prévia para Mac
 - Arraste com o mouse. Para gravidade e arremesso, marque **Ativar física** e clique em **Aplicar**.
 - Ajuste tamanho, cores, velocidades, pet e camada no painel. A prévia não altera o pet até aplicar.
 - Para manter vários pets juntos, clique nos cartões desejados e ajuste **Quantidade** para criar cópias. Cada cartão mantém os demais ativos. Para remover uma espécie, desmarque **Mostrar na área de trabalho** nela. Confirme em **Aplicar**.
+- O limite é de **6 pets somando todas as espécies e cores**. Ao atingir o limite, remova um pet ou reduza uma quantidade para adicionar outro. Configurações antigas acima do limite exibem somente os primeiros seis, sem reescrever suas preferências automaticamente.
 - Para remover cópias, use **Remover 1** ou diminua **Quantidade**. **Remover espécie** e quantidade **zero** retiram todas as cópias dessa espécie. **Remover todos os pets** limpa a tela. Confirme em **Aplicar**; o ícone da bandeja continua disponível.
 - Use o ícone na bandeja, perto do relógio, para abrir as configurações ou **Sair**.
 
