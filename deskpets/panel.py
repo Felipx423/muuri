@@ -323,7 +323,7 @@ class SettingsPanel(QtWidgets.QWidget):
         self.species_list.setObjectName("collection")
         self.species_list.setAccessibleName("Coleção de pets; selecione para ver os ajustes")
         self.species_list.setItemDelegate(PetCardDelegate(self.species_list))
-        featured = ("muuri", "fefo", "cato", "manu", "eco", "voltinha")
+        featured = ("muuri", "fefo", "cato", "manu", "eco", "voltinha", "friguinho")
         for species in sorted(PETS_DATA, key=lambda name: (featured.index(name) if name in featured else len(featured), name)):
             item = QtWidgets.QListWidgetItem(pet_icon(species), species.capitalize())
             item.setData(QtCore.Qt.ItemDataRole.UserRole, species)
@@ -613,6 +613,7 @@ class SettingsPanel(QtWidgets.QWidget):
                         '<p>Voltinha: referência visual fornecida pelo usuário; base preparada com geração de imagens e animações feitas a partir da mesma base.</p>'
                         '<p>Fefo: personagem integrado a partir da referência canônica fefo.svg fornecida pelo usuário.</p>'
                         '<p>Cato: personagem integrado a partir dos materiais de referência fornecidos pelo usuário.</p>'
+                        '<p>Friguinho: referência visual fornecida pelo usuário; sprite base criado com geração de imagens e animações derivadas dessa base.</p>'
                         '<h3>Licença MIT do DeskPets</h3><pre style="white-space: pre-wrap">'
                         + html.escape(license_text) + '</pre>')
         self.credits_browser = credits
