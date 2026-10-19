@@ -25,15 +25,13 @@ WS_POPUP = 0x80000000
 ULW_ALPHA = 0x2
 
 user32FS = windll.user32
-user32FS.SetProcessDPIAware()  # optional, makes functions return real pixel numbers instead of scaled values
-
-full_screen_rect = (0, 0, user32FS.GetSystemMetrics(0), user32FS.GetSystemMetrics(1))
 
 
 def is_full_screen():
     try:
         hWnd = user32FS.GetForegroundWindow()
         rect = win32gui.GetWindowRect(hWnd)
+        full_screen_rect = (0, 0, user32FS.GetSystemMetrics(0), user32FS.GetSystemMetrics(1))
         return rect == full_screen_rect
     except:
         return False

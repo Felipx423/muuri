@@ -56,6 +56,18 @@ class ClickTests(unittest.TestCase):
             self.assertEqual(sequence.release((6, 0), index * 0.45 + 0.1), index == 3)
 
 
+class WindowsDisplayTests(unittest.TestCase):
+    def test_full_screen_bounds_use_current_dpi_aware_metrics(self):
+        metrics = [1000, 800, 1200, 900]
+        rectangles = [(0, 0, 1000, 800), (0, 0, 1200, 900)]
+        with patch.object(windows_API.user32FS, "GetForegroundWindow", return_value=1), \
+                patch.object(windows_API.win32gui, "GetWindowRect", side_effect=rectangles), \
+                patch.object(windows_API.user32FS, "GetSystemMetrics", side_effect=metrics) as get_metrics:
+            self.assertTrue(windows_API.is_full_screen())
+            self.assertTrue(windows_API.is_full_screen())
+        self.assertEqual(get_metrics.call_count, 4)
+
+
 class SaveTests(unittest.TestCase):
     def test_second_replace_failure_restores_both_files(self):
         with tempfile.TemporaryDirectory() as folder:
