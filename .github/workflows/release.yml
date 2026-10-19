@@ -89,7 +89,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: Muuri 1.4.1 — Correção do arraste no Windows
+          name: Muuri 1.4.2 — Animações mais fluidas
           target_commitish: ${{ github.sha }}
           draft: false
           prerelease: false
@@ -98,6 +98,6 @@ jobs:
             release-assets/windows/*
             release-assets/macos/*
           body: |
-            Muuri 1.4.1 corrige o arraste dos pets no Windows removendo a configuração de DPI que entrava em conflito com o Qt. Também inclui os instaladores atualizados para Windows e macOS Apple Silicon.
+            Muuri 1.4.2 melhora a fluidez ao reutilizar frames GIF já preparados, reduz trabalho ocioso da física e acelera a conversão de imagens no Windows. Mantém as animações, o arraste e a física existentes e inclui instaladores para Windows e macOS Apple Silicon.
 
             Esta publicação inclui instalador Windows x64 e aplicativo macOS Apple Silicon (M1 ou posterior, macOS 13+). O aplicativo Mac ainda não é notarizado pela Apple; consulte `packaging/MACOS.md` no código-fonte para as instruções de primeira abertura.

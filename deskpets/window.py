@@ -137,9 +137,11 @@ class MainWindow(QtWidgets.QMainWindow):
         elapsed = now - self.last_physics_update
         self.last_physics_update = now
         for pet in self.pets:
-            if pet.draggable or pet.settings_clicks:
+            if ((pet.draggable or pet.settings_clicks)
+                    and (pet.mouse_pressed or pet.dragging)):
                 Desktop.update_drag(pet)
-            Desktop.update_physics(pet, elapsed)
+            if pet.physics_enabled:
+                Desktop.update_physics(pet, elapsed)
 
     def start_refresh(self):
         if self.refreshing:

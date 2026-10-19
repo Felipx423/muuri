@@ -288,14 +288,6 @@ class Windows:
     @staticmethod
     def close(pet):
         try:
-            if getattr(pet, "hbitmaps", None):
-                for hb in pet.hbitmaps:
-                    try:
-                        gdi32.DeleteObject(hb)
-                    except Exception:
-                        pass
-            pet.hbitmaps = []
-
             if getattr(pet, "hwnd", None):
                 if pet.draggable or pet.settings_clicks:
                     Windows.end_drag(pet)
