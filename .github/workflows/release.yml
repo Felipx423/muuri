@@ -86,10 +86,25 @@ jobs:
         with:
           name: muuri-macos-release
           path: release-assets/macos
+      - name: Verificar artefatos da release
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "muuri-v1.4.4"
+          test -s release-assets/windows/Muuri-Setup.exe
+          test -s release-assets/windows/MUURI-SHA256.txt
+          test -s release-assets/macos/Muuri-macOS-arm64.dmg
+          test -s release-assets/macos/MUURI-macOS-SHA256.txt
+          grep -Eq '^[0-9a-fA-F]{64}[[:space:]]+\*?Muuri-Setup\.exe$' release-assets/windows/MUURI-SHA256.txt
+          grep -Eq '^[0-9a-fA-F]{64}[[:space:]]+\*?Muuri-macOS-arm64\.dmg$' release-assets/macos/MUURI-macOS-SHA256.txt
+          windows_hash="$(sha256sum release-assets/windows/Muuri-Setup.exe | awk '{print tolower($1)}')"
+          macos_hash="$(sha256sum release-assets/macos/Muuri-macOS-arm64.dmg | awk '{print tolower($1)}')"
+          grep -Eiq "^${windows_hash}[[:space:]]+\*?Muuri-Setup\.exe$" release-assets/windows/MUURI-SHA256.txt
+          grep -Eiq "^${macos_hash}[[:space:]]+\*?Muuri-macOS-arm64\.dmg$" release-assets/macos/MUURI-macOS-SHA256.txt
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: Muuri 1.4.3 — Friguinho
+          name: Muuri 1.4.4 — Muuri Liso e atualizações confiáveis
           target_commitish: ${{ github.sha }}
           draft: false
           prerelease: false
@@ -98,6 +113,8 @@ jobs:
             release-assets/windows/*
             release-assets/macos/*
           body: |
-            Muuri 1.4.3 adiciona o Friguinho como novo pet, com animações de idle, caminhada, corrida, reação, descanso e arraste. Mantém os demais pets, as preferências e a renderização existente, e inclui instaladores para Windows e macOS Apple Silicon.
+            O Muuri Liso foi recriado a partir da referência canônica, com sete animações, contornos novos e transparência suave. Escolha Muuri → Liso → Aplicar no painel. O tamanho Original continua com 128 px e o estilo Pixelado permanece disponível. Corrigida a troca involuntária para o estilo pixelado durante o descanso.
+
+            Muuri 1.4.4 melhora o atualizador: o Windows confirma a instalação e verifica a versão instalada, enquanto o macOS baixa e abre o DMG verificado para substituição pelo Finder. A publicação valida os quatro artefatos antes de marcar a release como latest.
 
             Esta publicação inclui instalador Windows x64 e aplicativo macOS Apple Silicon (M1 ou posterior, macOS 13+). O aplicativo Mac ainda não é notarizado pela Apple; consulte `packaging/MACOS.md` no código-fonte para as instruções de primeira abertura.

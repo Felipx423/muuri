@@ -22,6 +22,16 @@ WORK = ROOT/'build/macos'
 OUTPUT = ROOT/'dist/macos'
 
 
+def write_version_marker():
+    source = (ROOT/'deskpets/version.py').read_text(encoding='utf-8')
+    match = re.search(r'^\s*APP_VERSION\s*=\s*["\']([^"\']+)["\']\s*$', source, re.M)
+    if not match:
+        raise RuntimeError('Não foi possível determinar a versão do Muuri para o pacote')
+    marker = WORK/'MUURI-VERSION.txt'
+    marker.write_text(match.group(1)+'\n',encoding='utf-8')
+    return marker
+
+
 def clean_defaults():
     catalog = json.loads((ROOT/'deskpets/pets_data.json').read_text(encoding='utf-8'))
     entries = []
@@ -146,6 +156,7 @@ def build(args):
     if not args.prepare_only and (sys.platform!='darwin' or platform.machine()!='arm64'):
         raise RuntimeError('O .app precisa ser compilado em um Mac com Python arm64. Use --prepare-only para preparar os fontes aqui.')
     defaults,source,embedded,icon = prepare()
+    version_marker = write_version_marker()
     if args.prepare_only:
         print('Fontes preparados, sem binário .app:',source)
         return
@@ -162,6 +173,7 @@ def build(args):
     if args.codesign_identity:
         args_list += ['--codesign-identity',args.codesign_identity]
     for path,target in ((ROOT/'deskpets/media','deskpets/media'),(ROOT/'deskpets/pets_data.json','deskpets'),
+                        (version_marker,'deskpets'),
                         (defaults/'pets_list.json','deskpets'),(defaults/'config.json','deskpets'),
                         (ROOT/'LICENSE','.'),(ROOT/'README.md','.'),(ROOT/'packaging/MACOS.md','.'),
                         (licenses(),'THIRD_PARTY_LICENSES'),(embedded,'.')):

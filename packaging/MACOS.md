@@ -39,7 +39,9 @@ Para executar pelo código, após instalar as dependências:
 
 Abra o DMG, arraste `Muuri.app` para Applications e abra o aplicativo pelo Finder. Quem recebe o `.app` não precisa instalar Python.
 
-O ícone da Muuri aparece na barra de menus, com **Abrir configurações**, **Atualizar pets** e **Sair**. O aplicativo fica residente nessa barra, sem exigir uma janela do painel aberta. Fechar o painel mantém os pets ativos. Quatro cliques rápidos em Muuri, Fefo, Cato ou Manu também abrem as configurações. No macOS, use as ações do menu do ícone; o menu nativo abre ao clicar, e o gesto de duplo clique do ícone não é a forma principal de abertura.
+O ícone da Muuri aparece na barra de menus, com **Abrir configurações**, **Atualizar pets**, **Verificar atualizações** e **Sair**. O aplicativo fica residente nessa barra, sem exigir uma janela do painel aberta. Fechar o painel mantém os pets ativos. Quatro cliques rápidos em Muuri, Fefo, Cato ou Manu também abrem as configurações. No macOS, use as ações do menu do ícone; o menu nativo abre ao clicar, e o gesto de duplo clique do ícone não é a forma principal de abertura.
+
+Quando houver uma versão nova, o Muuri baixa e verifica `Muuri-macOS-arm64.dmg` usando `MUURI-macOS-SHA256.txt` e abre a imagem no Finder. Arraste o `Muuri.app` para `Applications` e substitua a cópia existente. As preferências em `~/Library/Application Support/Muuri/` permanecem intactas. Como o app não é notarizado, o macOS pode pedir confirmação em **Privacidade e Segurança → Abrir Mesmo Assim**.
 
 Ative quantas espécies quiser, ajuste **Quantidade** para criar cópias e confirme em **Aplicar**. Tamanho, velocidades, arraste e física continuam por espécie. Fefo mantém seu perfil aéreo.
 

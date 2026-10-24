@@ -579,7 +579,7 @@ class SettingsPanel(QtWidgets.QWidget):
         layout.addSpacing(16)
         layout.addWidget(label("Atualizações", "sectionTitle"))
         layout.addWidget(label(f"Muuri {APP_VERSION}", "muted"))
-        self.update_status_label = label("A versão instalada no Windows procura atualizações ao abrir. No macOS, consulte os downloads do projeto.", "muted", True)
+        self.update_status_label = label("O Windows instala após sua confirmação; o macOS baixa e abre o DMG para você substituir o app.", "muted", True)
         layout.addWidget(self.update_status_label)
         self.update_button = QtWidgets.QPushButton("Verificar atualizações")
         self.update_button.setMaximumWidth(300)

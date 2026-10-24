@@ -31,7 +31,7 @@ espécies, licenças e código Python são preservados. A compressão é LZMA2/u
 
 ## Identidade e compatibilidade
 
-O pacote Windows usa a versão 1.4.2, nome Muuri, executável Muuri.exe,
+O pacote Windows usa a versão 1.4.4, nome Muuri, executável Muuri.exe,
 instalador Muuri-Setup.exe e o ícone próprio existente. Nenhum publisher foi
 inventado: o campo AppPublisher foi omitido. Os créditos continuam no guia,
 no painel e na licença original. A versão 1.0.1 publicada não é substituída
@@ -61,5 +61,6 @@ update.log junto ao download para diagnóstico.
 
 Mantenha AppId, DefaultDirName e as regras onlyifdoesntexist dos JSONs.
 Atualize deskpets/version.py e AppVersion em muuri.iss a cada release do Muuri.
-Execução por código-fonte não instala atualizações. No macOS, a ação abre
-os downloads; a substituição automática do .app não faz parte desta versão.
+Execução por código-fonte não instala atualizações. No macOS, a ação baixa e
+verifica o DMG Apple Silicon e o abre no Finder; arraste o Muuri para
+Applications para concluir a substituição do app.

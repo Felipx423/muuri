@@ -1,5 +1,15 @@
 # Changelog
 
+## Muuri [1.4.4]
+### Changed
+- Muuri Liso recriado a partir da referência canônica, com sete animações APNG e transparência suave.
+### Fixed
+- O descanso provocado pela proximidade do cursor respeita o estilo visual escolhido.
+### Added
+- Atualização Windows com confirmação, verificação final de versão e diagnóstico persistente.
+- Atualização macOS com download verificado e abertura automática do DMG Apple Silicon.
+- Validação dos quatro artefatos de plataforma antes da publicação da release.
+
 ## Muuri [1.4.0]
 ### Added
 - Voltinha, com sete animações transparentes de 128 px derivadas de uma única base canônica.

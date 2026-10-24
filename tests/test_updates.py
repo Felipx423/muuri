@@ -19,7 +19,8 @@ def release_data(version=None, payload=b"verified installer"):
     tag = "muuri-v" + version
     return dict(tag_name=tag, draft=False, prerelease=False, assets=[
         dict(name=name, size=len(payload), browser_download_url=f"https://github.com/{updates.REPOSITORY}/releases/download/{tag}/{name}")
-        for name in (updates.INSTALLER_NAME, "MUURI-SHA256.txt")])
+        for name in (updates.INSTALLER_NAME, "MUURI-SHA256.txt",
+                     updates.MACOS_INSTALLER_NAME, updates.MACOS_CHECKSUM_NAME)])
 
 
 class Response(io.BytesIO):
@@ -59,6 +60,8 @@ class UpdateTests(unittest.TestCase):
         digest = "a" * 64
         self.assertEqual(updates.installer_checksum((digest + "  Muuri-Setup.exe\n").encode()), digest)
         self.assertEqual(updates.installer_checksum((digest + " *Muuri-Setup.exe\n").encode()), digest)
+        self.assertEqual(updates.asset_checksum((digest + "  Muuri-macOS-arm64.dmg\n").encode(),
+                                                updates.MACOS_INSTALLER_NAME), digest)
         for text in (digest+"  another.exe", digest+"  ../Muuri-Setup.exe", "invalid", (digest+"  Muuri-Setup.exe\n")*2):
             with self.assertRaises(ValueError):
                 updates.installer_checksum(text.encode())
@@ -81,6 +84,19 @@ class UpdateTests(unittest.TestCase):
                         with self.assertRaises((ValueError, InterruptedError)):
                             updates.download_update(release, folder, cancelled=lambda: cancelled)
                         self.assertEqual(list(Path(folder).iterdir()), [])
+
+    def test_macos_download_uses_dmg_and_macos_manifest(self):
+        payload = b"verified dmg"
+        digest = hashlib.sha256(payload).hexdigest()
+        manifest = (digest + "  Muuri-macOS-arm64.dmg").encode()
+        release = updates.parse_release(release_data(payload=payload))
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(updates, "_read_small", return_value=manifest), \
+                patch.object(updates, "urlopen", return_value=Response(payload)):
+            path, expected = updates.download_update(release, folder, platform_name="macos")
+            self.assertEqual(path.name, updates.MACOS_INSTALLER_NAME)
+            self.assertEqual(path.read_bytes(), payload)
+            self.assertEqual(expected, digest)
 
     def test_same_length_corruption_and_insecure_redirect_are_rejected(self):
         payload = b"verified installer"
@@ -109,6 +125,25 @@ class UpdateTests(unittest.TestCase):
             self.assertIn("Muuri''s & test", script)
             self.assertIn("} '", script)
             self.assertNotIn("ExecutionPolicy", " ".join(command))
+
+    def test_installer_helper_checks_target_version(self):
+        with tempfile.TemporaryDirectory() as folder:
+            installer = Path(folder) / updates.INSTALLER_NAME
+            installer.write_bytes(b"test")
+            command = updates.installer_command(installer, "a" * 64, Path(folder) / "installed", 123, "1.4.4")
+            script = command[-1]
+            self.assertIn("MUURI-VERSION.txt", script)
+            self.assertIn("1.4.4", script)
+
+    def test_macos_launcher_rechecks_hash_and_opens_dmg(self):
+        with tempfile.TemporaryDirectory() as folder:
+            image = Path(folder) / updates.MACOS_INSTALLER_NAME
+            image.write_bytes(b"dmg")
+            digest = hashlib.sha256(image.read_bytes()).hexdigest()
+            with patch.object(updates.sys, "platform", "darwin"), \
+                    patch.object(updates.subprocess, "Popen") as popen:
+                updates.launch_macos_dmg(image, digest)
+            popen.assert_called_once_with(["open", str(image.resolve())], close_fds=True)
 
     def test_development_run_cannot_install_or_check_automatically(self):
         with patch.object(updates.sys, "frozen", False, create=True):
