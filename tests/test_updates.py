@@ -77,12 +77,13 @@ class UpdateTests(unittest.TestCase):
                 with patch.object(updates, "_read_small", return_value=manifest), \
                         patch.object(updates, "urlopen", return_value=Response(received)):
                     if success:
-                        path, expected = updates.download_update(release, folder)
+                        path, expected = updates.download_update(release, folder, platform_name="windows")
                         self.assertEqual(path.read_bytes(), payload)
                         self.assertEqual(expected, digest)
                     else:
                         with self.assertRaises((ValueError, InterruptedError)):
-                            updates.download_update(release, folder, cancelled=lambda: cancelled)
+                            updates.download_update(release, folder, cancelled=lambda: cancelled,
+                                                    platform_name="windows")
                         self.assertEqual(list(Path(folder).iterdir()), [])
 
     def test_macos_download_uses_dmg_and_macos_manifest(self):
@@ -106,7 +107,7 @@ class UpdateTests(unittest.TestCase):
                 patch.object(updates, "_read_small", return_value=(digest+"  Muuri-Setup.exe").encode()), \
                 patch.object(updates, "urlopen", return_value=Response(b"x"*len(payload))):
             with self.assertRaisesRegex(ValueError, "verificação"):
-                updates.download_update(release, folder)
+                updates.download_update(release, folder, platform_name="windows")
         response = Response()
         response.geturl = lambda: "http://release-assets.githubusercontent.com/test"
         with self.assertRaises(ValueError):
