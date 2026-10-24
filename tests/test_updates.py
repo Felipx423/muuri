@@ -168,7 +168,7 @@ class UpdateControllerTests(unittest.TestCase):
         self.app.processEvents()
 
     def test_no_network_on_source_startup_and_only_one_check_runs_at_a_time(self):
-        with patch.object(updates, "can_install_update", return_value=False), \
+        with patch.object(updates, "can_check_for_update", return_value=False), \
                 patch.object(updates, "check_for_update") as check:
             self.controller.start()
             self.controller.check_automatically()
@@ -184,11 +184,29 @@ class UpdateControllerTests(unittest.TestCase):
         self.assertEqual(first.value, "completed")
 
     def test_download_does_not_exit_or_install_when_pending_changes_are_kept(self):
+        self.controller.asset_platform = "windows"
         self.owner.panel.allow_close = lambda: False
-        with patch.object(updates, "launch_installer") as launch:
+        with patch.object(updates, "launch_installer") as launch, \
+                patch.object(QtWidgets.QMessageBox, "warning") as warning:
             self.controller.downloaded((Path("Muuri-Setup.exe"), "a"*64))
             launch.assert_not_called()
+            warning.assert_not_called()
         self.assertIsNotNone(self.controller.ready)
+
+    def test_macos_download_opens_dmg_without_windows_install_or_shutdown(self):
+        self.controller.asset_platform = "macos"
+        ready = (Path("Muuri-macOS-arm64.dmg"), "a"*64)
+        with patch.object(updates, "launch_macos_dmg") as open_dmg, \
+                patch.object(updates, "launch_installer") as install, \
+                patch.object(QtWidgets.QMessageBox, "warning") as warning, \
+                patch.object(QtWidgets.QApplication, "quit") as quit_app:
+            self.controller.downloaded(ready)
+            open_dmg.assert_called_once_with(*ready)
+            install.assert_not_called()
+            warning.assert_not_called()
+            quit_app.assert_not_called()
+        self.assertEqual(self.controller.ready, ready)
+        self.assertIn("DMG aberto", self.owner.panel.update_status_label.text())
 
     def test_automatic_network_failure_is_quiet_and_leaves_pets_untouched(self):
         self.controller.automatic = True
