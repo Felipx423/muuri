@@ -95,6 +95,7 @@ jobs:
           test -s release-assets/windows/MUURI-SHA256.txt
           test -s release-assets/macos/Muuri-macOS-arm64.dmg
           test -s release-assets/macos/MUURI-macOS-SHA256.txt
+          sed -i 's/\r$//' release-assets/windows/MUURI-SHA256.txt release-assets/macos/MUURI-macOS-SHA256.txt
           grep -Eq '^[0-9a-fA-F]{64}[[:space:]]+\*?Muuri-Setup\.exe$' release-assets/windows/MUURI-SHA256.txt
           grep -Eq '^[0-9a-fA-F]{64}[[:space:]]+\*?Muuri-macOS-arm64\.dmg$' release-assets/macos/MUURI-macOS-SHA256.txt
           windows_hash="$(sha256sum release-assets/windows/Muuri-Setup.exe | awk '{print tolower($1)}')"
