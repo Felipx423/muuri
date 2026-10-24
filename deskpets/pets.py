@@ -176,7 +176,7 @@ class Pet:
                 squirrel_climb(self)
                 return
 
-            color_states = PETS_DATA[self.species]["states"][self.color]
+            color_states = states_for(self.species, self.color, self.style)
             if "lie" in color_states and distance < self.height_lie and not self.immunity:
                 gif_path = color_states["lie"]
                 hold = self.lie_duration

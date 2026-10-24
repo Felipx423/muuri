@@ -1662,13 +1662,13 @@
                 "label": "Liso",
                 "states": {
                     "blue": {
-                        "idle": "media/muuri/blue_smooth_idle_8fps.gif",
-                        "lie": "media/muuri/blue_smooth_lie_8fps.gif",
-                        "run": "media/muuri/blue_smooth_run_8fps.gif",
-                        "swipe": "media/muuri/blue_smooth_swipe_8fps.gif",
-                        "walk": "media/muuri/blue_smooth_walk_8fps.gif",
-                        "walk_fast": "media/muuri/blue_smooth_walk_fast_8fps.gif",
-                        "drag": "media/muuri/blue_smooth_drag_8fps.gif"
+                        "idle": "media/muuri/blue_smooth_idle_8fps.png",
+                        "lie": "media/muuri/blue_smooth_lie_8fps.png",
+                        "run": "media/muuri/blue_smooth_run_8fps.png",
+                        "swipe": "media/muuri/blue_smooth_swipe_8fps.png",
+                        "walk": "media/muuri/blue_smooth_walk_8fps.png",
+                        "walk_fast": "media/muuri/blue_smooth_walk_fast_8fps.png",
+                        "drag": "media/muuri/blue_smooth_drag_8fps.png"
                     }
                 }
             }
