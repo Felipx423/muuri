@@ -6,7 +6,8 @@ from PIL import Image
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from . import config_io
-from .pets import PETS_DATA
+from .pets import PETS_DATA, states_for
+from .petworker import MAX_PETS
 from .version import APP_VERSION
 
 
@@ -16,7 +17,7 @@ SIZES = [("Very Small", "Bem pequeno", 20), ("Small", "Pequeno", 40),
 STATE_NAMES = {"idle": "Parada", "walk": "Andando", "walk_fast": "Trotando",
                "run": "Correndo", "lie": "Descansando", "swipe": "Reação",
                "drag": "Sendo arrastada", "fly": "Voando"}
-FIELDS = ("enabled", "colors", "size", "draggable", "physics_enabled", "movement_multiplier", "animation_multiplier", "count")
+FIELDS = ("enabled", "colors", "size", "draggable", "physics_enabled", "movement_multiplier", "animation_multiplier", "count", "style")
 from .panel_style import STYLE
 
 
@@ -155,9 +156,9 @@ class Preview(QtWidgets.QWidget):
         self.timer.timeout.connect(self.advance)
         self.timer.start()
 
-    def configure(self, species, color, state, size, fps, movement, animation, direction):
+    def configure(self, species, color, state, size, fps, movement, animation, direction, style="pixel"):
         data = PETS_DATA[species]
-        path = data["states"][color][state]
+        path = states_for(species, color, style)[state]
         if path not in self.cache:
             with Image.open(config_io.BASE_DIR / path) as gif:
                 frames = []
@@ -322,7 +323,7 @@ class SettingsPanel(QtWidgets.QWidget):
         self.species_list.setObjectName("collection")
         self.species_list.setAccessibleName("Coleção de pets; selecione para ver os ajustes")
         self.species_list.setItemDelegate(PetCardDelegate(self.species_list))
-        featured = ("muuri", "fefo", "cato", "manu")
+        featured = ("muuri", "fefo", "cato", "manu", "eco", "voltinha", "friguinho")
         for species in sorted(PETS_DATA, key=lambda name: (featured.index(name) if name in featured else len(featured), name)):
             item = QtWidgets.QListWidgetItem(pet_icon(species), species.capitalize())
             item.setData(QtCore.Qt.ItemDataRole.UserRole, species)
@@ -432,9 +433,9 @@ class SettingsPanel(QtWidgets.QWidget):
         self.quantity.setObjectName("quantity")
         self.quantity.setAccessibleName("Quantidade de pets por cor")
         self.quantity.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.quantity.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("0|[1-9][0-9]*")))
+        self.quantity.setValidator(QtGui.QIntValidator(0, MAX_PETS, self.quantity))
         self.quantity.setFixedWidth(48)
-        self.quantity.setToolTip("Cópias para cada cor marcada, sem limite predefinido. Zero remove ao aplicar.")
+        self.quantity.setToolTip(f"Máximo de {MAX_PETS} pets no total, contando todas as cores e espécies. Zero remove ao aplicar.")
         quantity_row.addWidget(self.quantity)
         self.add_one_button = QtWidgets.QPushButton("+")
         self.add_one_button.setObjectName("step")
@@ -450,6 +451,11 @@ class SettingsPanel(QtWidgets.QWidget):
         self.size = QtWidgets.QComboBox()
         self.size.setAccessibleName("Tamanho do pet")
         appearance_form.addWidget(self.size)
+        self.style_label = label("Estilo visual")
+        appearance_form.addWidget(self.style_label)
+        self.style_combo = QtWidgets.QComboBox()
+        self.style_combo.setAccessibleName("Estilo visual do pet")
+        appearance_form.addWidget(self.style_combo)
         appearance_form.addWidget(label("Cores ativas"))
         self.colors_box = QtWidgets.QWidget()
         self.colors_layout = QtWidgets.QGridLayout(self.colors_box)
@@ -533,6 +539,7 @@ class SettingsPanel(QtWidgets.QWidget):
         self.animation.valueChanged.connect(self.changed)
         self.layer_combo.currentIndexChanged.connect(self.layer_changed)
         self.preview_color.currentIndexChanged.connect(self.color_preview_changed)
+        self.style_combo.currentIndexChanged.connect(self.changed)
         self.preview_state.currentIndexChanged.connect(self.update_preview)
         self.preview_direction.currentIndexChanged.connect(self.update_preview)
         self.species_list.currentItemChanged.connect(self.selection_changed)
@@ -572,7 +579,7 @@ class SettingsPanel(QtWidgets.QWidget):
         layout.addSpacing(16)
         layout.addWidget(label("Atualizações", "sectionTitle"))
         layout.addWidget(label(f"Muuri {APP_VERSION}", "muted"))
-        self.update_status_label = label("A versão instalada no Windows procura atualizações ao abrir. No macOS, consulte os downloads do projeto.", "muted", True)
+        self.update_status_label = label("O Windows instala após sua confirmação; o macOS baixa e abre o DMG para você substituir o app.", "muted", True)
         layout.addWidget(self.update_status_label)
         self.update_button = QtWidgets.QPushButton("Verificar atualizações")
         self.update_button.setMaximumWidth(300)
@@ -602,8 +609,11 @@ class SettingsPanel(QtWidgets.QWidget):
                         '<h3>Companheiros</h3>'
                         '<p>Muuri: design de referência fornecido pelo usuário; animações adaptadas para DeskPets.</p>'
                         '<p>Manu: design de referência fornecido pelo usuário; animações adaptadas para DeskPets com geração de imagens.</p>'
+                        '<p>Eco: referência visual fornecida pelo usuário; base preparada com geração de imagens e animações feitas a partir da mesma base.</p>'
+                        '<p>Voltinha: referência visual fornecida pelo usuário; base preparada com geração de imagens e animações feitas a partir da mesma base.</p>'
                         '<p>Fefo: personagem integrado a partir da referência canônica fefo.svg fornecida pelo usuário.</p>'
                         '<p>Cato: personagem integrado a partir dos materiais de referência fornecidos pelo usuário.</p>'
+                        '<p>Friguinho: referência visual fornecida pelo usuário; sprite base criado com geração de imagens e animações derivadas dessa base.</p>'
                         '<h3>Licença MIT do DeskPets</h3><pre style="white-space: pre-wrap">'
                         + html.escape(license_text) + '</pre>')
         self.credits_browser = credits
@@ -651,6 +661,9 @@ class SettingsPanel(QtWidgets.QWidget):
         self.animation.setValue(100)
 
     def add_one(self):
+        if sum(self.active_count(e) for e in self.draft['pets']) >= MAX_PETS:
+            self.show_limit_notice()
+            return
         if not self.enabled.isChecked():
             self.activate_selected()
         elif self.quantity.hasAcceptableInput():
@@ -662,6 +675,19 @@ class SettingsPanel(QtWidgets.QWidget):
             return 0
         return entry.get("count", 1) * len(entry.get("colors", []))
 
+    @classmethod
+    def visible_counts(cls, entries):
+        remaining, counts = MAX_PETS, {}
+        for entry in entries:
+            count = min(cls.active_count(entry), remaining)
+            counts[entry['species']] = counts.get(entry['species'], 0) + count
+            remaining -= count
+        return counts
+
+    def show_limit_notice(self):
+        self.status.setText(f"Limite de {MAX_PETS} pets no total")
+        self.status_detail.setText("Remova um pet ou diminua a quantidade antes de adicionar outro.")
+
     def explore_collection(self):
         self.view_group.button(0).setChecked(True)
         self.search.clear()
@@ -670,7 +696,7 @@ class SettingsPanel(QtWidgets.QWidget):
     def filter_collection(self, *_):
         if self.loading:
             return
-        original = {entry['species']: entry for entry in self.original['pets']}
+        visible_counts = self.visible_counts(self.original['pets'])
         draft = {entry['species']: entry for entry in self.draft['pets']}
         query = self.search.text().strip().casefold()
         active_only = self.view_group.checkedId() == 1
@@ -678,7 +704,7 @@ class SettingsPanel(QtWidgets.QWidget):
         for row in range(self.species_list.count()):
             item = self.species_list.item(row)
             species = item.data(QtCore.Qt.ItemDataRole.UserRole)
-            before, after = self.active_count(original.get(species)), self.active_count(draft.get(species))
+            before, after = visible_counts.get(species, 0), self.active_count(draft.get(species))
             if before != after:
                 text = "Será removido" if after == 0 else f"{before} → {after} após aplicar"
             else:
@@ -694,7 +720,7 @@ class SettingsPanel(QtWidgets.QWidget):
         self.empty_label.setText("Nenhum companheiro encontrado" if query else "Um espaço para novas companhias")
         self.collection_info.setText(f"{visible} {'espécies nesta seleção' if active_only else 'companheiros para conhecer'}")
         self.view_group.button(0).setText(f"Coleção · {len(PETS_DATA)}")
-        self.view_group.button(1).setText(f"Na tela · {sum(self.active_count(e) > 0 for e in self.original['pets'])}")
+        self.view_group.button(1).setText(f"Na tela · {sum(count > 0 for count in visible_counts.values())}")
         self.species_list.viewport().update()
 
     def add_speed(self, layout, text):
@@ -716,7 +742,8 @@ class SettingsPanel(QtWidgets.QWidget):
         interactive = 'drag' in data['states'][data['colors'][0]]
         return next((e for e in self.draft["pets"] if e["species"] == self.species),
                     {"species": self.species, "colors": [], "enabled": False, "size": "Original",
-                     "draggable": interactive, "settings_clicks": 4 if interactive else 0})
+                     "draggable": interactive, "settings_clicks": 4 if interactive else 0,
+                     **({"style": next(iter(data.get("styles", {})), "pixel")} if data.get("styles") else {})})
 
     def select(self, species):
         # Opening the panel or selecting a pet programmatically must not enable it.
@@ -774,6 +801,16 @@ class SettingsPanel(QtWidgets.QWidget):
         self.physics.setToolTip(PETS_DATA[self.species].get("physics", {}).get(
             "description", "Ligada: gravidade, arremesso e quique leve. Desligada: o pet permanece onde você o soltar."))
         self.physics_note.setText(self.physics.toolTip())
+        self.style_combo.blockSignals(True)
+        self.style_combo.clear()
+        styles = PETS_DATA[self.species].get("styles", {})
+        for style, style_data in styles.items():
+            self.style_combo.addItem(style_data.get("label", style.capitalize()), style)
+        self.style_label.setVisible(len(styles) > 1)
+        self.style_combo.setVisible(len(styles) > 1)
+        if styles:
+            self.style_combo.setCurrentIndex(max(0, self.style_combo.findData(entry.get("style", next(iter(styles))))))
+        self.style_combo.blockSignals(False)
         while self.colors_layout.count():
             check = self.colors_layout.takeAt(0).widget()
             check.hide()
@@ -794,7 +831,8 @@ class SettingsPanel(QtWidgets.QWidget):
         self.preview_color.setVisible(multiple_colors)
         self.preview_color_label.setVisible(multiple_colors)
         color = self.preview_color.currentData()
-        path = next(iter(PETS_DATA[self.species]["states"][color].values()))
+        style = self.style_combo.currentData() or "pixel"
+        path = next(iter(states_for(self.species, color, style).values()))
         with Image.open(config_io.BASE_DIR / path) as gif:
             original_height = gif.height
         self.size.clear()
@@ -815,7 +853,8 @@ class SettingsPanel(QtWidgets.QWidget):
         previous = self.preview_state.currentData()
         self.preview_state.blockSignals(True)
         self.preview_state.clear()
-        for state in PETS_DATA[self.species]["states"][self.preview_color.currentData()]:
+        style = self.style_combo.currentData() or "pixel"
+        for state in states_for(self.species, self.preview_color.currentData(), style):
             self.preview_state.addItem(STATE_NAMES.get(state, state.replace("_", " ").capitalize()), state)
         self.pet_badge.setText(self.preview_color.currentText())
         self.pet_badge.setToolTip(f"{self.preview_state.count()} animações disponíveis")
@@ -831,7 +870,8 @@ class SettingsPanel(QtWidgets.QWidget):
         try:
             self.preview.configure(self.species, self.preview_color.currentData(), self.preview_state.currentData(),
                                    self.size.currentData(), self.entry().get("fps", 8), self.movement.value()/100,
-                                   self.animation.value()/100, self.preview_direction.currentData())
+                                   self.animation.value()/100, self.preview_direction.currentData(),
+                                   self.style_combo.currentData() or "pixel")
             self.preview_info.setText("Explore a prévia. Seu desktop só muda ao aplicar.")
             self.preview_info.setToolTip(f"Canvas: {self.preview.frames[0].height()} px · movimento: {self.preview.velocity:.1f} px/s".replace(".", ","))
             self.flip_button.setToolTip(self.preview_direction.currentText())
@@ -860,6 +900,14 @@ class SettingsPanel(QtWidgets.QWidget):
                      size=self.size.currentData(), draggable=self.draggable.isChecked(),
                      physics_enabled=self.physics.isChecked(),
                      movement_multiplier=self.movement.value()/100, animation_multiplier=self.animation.value()/100)
+        if PETS_DATA[self.species].get("styles"):
+            entry["style"] = self.style_combo.currentData() or "pixel"
+        before = sum(self.active_count(e) for e in self.draft['pets'])
+        after = sum(self.active_count(e) for e in self.draft['pets'] if e['species'] != self.species) + self.active_count(entry)
+        if after > MAX_PETS and after > before:
+            self.select_species(self.species_list.currentItem())
+            self.show_limit_notice()
+            return
         for index, existing in enumerate(self.draft["pets"]):
             if existing["species"] == self.species:
                 self.draft["pets"][index] = entry
@@ -880,12 +928,21 @@ class SettingsPanel(QtWidgets.QWidget):
 
     def update_status(self):
         dirty = self.is_dirty()
+        total = sum(self.active_count(e) for e in self.draft['pets'])
+        valid_quantity = self.quantity.hasAcceptableInput()
         active = self.enabled.isChecked() and self.quantity.hasAcceptableInput() and int(self.quantity.text()) > 0
         self.remove_one_button.setEnabled(active)
-        self.remove_species_button.setEnabled(active)
+        self.remove_species_button.setEnabled(self.active_count(self.entry()) > 0)
         self.remove_all_button.setEnabled(any(entry.get('enabled', True) for entry in self.draft['pets']))
-        self.apply_button.setEnabled(dirty)
+        self.apply_button.setEnabled(dirty and valid_quantity and total <= MAX_PETS)
         self.discard_button.setEnabled(dirty)
+        colors = max(1, sum(check.isChecked() for check in self.color_checks.values()))
+        extra = colors if active else colors * max(1, int(self.quantity.text()) if valid_quantity else 1)
+        can_add = valid_quantity and total + extra <= MAX_PETS
+        self.add_one_button.setEnabled(can_add)
+        self.add_button.setEnabled(can_add)
+        for button in (self.add_one_button, self.add_button):
+            button.setToolTip("Adicionar pet" if can_add else f"Limite de {MAX_PETS} pets no total; reduza a quantidade para adicionar.")
         original = {e['species']: e for e in self.original['pets']}
         summaries = []
         for entry in self.draft['pets']:
@@ -900,12 +957,43 @@ class SettingsPanel(QtWidgets.QWidget):
         full_summary = " · ".join(summaries)
         self.status_detail.setText(" · ".join(summaries[:2]) + (f" · +{len(summaries)-2}" if len(summaries) > 2 else "") if dirty else "Nenhuma alteração pendente")
         self.status_detail.setToolTip(full_summary)
-        self.total_label.setText(f"{sum(self.active_count(e) for e in self.original['pets'])} pets na tela")
-        before = self.active_count(original.get(self.species))
+        visible_counts = self.visible_counts(self.original['pets'])
+        self.total_label.setText(f"{sum(visible_counts.values())}/{MAX_PETS} pets na tela")
+        before = visible_counts.get(self.species, 0)
         after = self.active_count(self.entry())
         self.quantity_note.setText(f"Na tela: {before} → Após aplicar: {after}" if before != after else
                                    f"{before} na tela" if after else "Desativado · ative para mostrar")
+        self.quantity_note.setText(self.quantity_note.text() + f" · Total após aplicar: {total}/{MAX_PETS}")
+        if total > MAX_PETS:
+            self.show_limit_notice()
+        elif not valid_quantity:
+            self.status.setText(f"Informe uma quantidade inteira de 0 a {MAX_PETS}.")
         self.filter_collection()
+
+    def sync_tray_changes(self, document, before, visibility=None):
+        """Accept immediate tray actions without applying unrelated panel edits."""
+        old_entries = {entry["species"]: entry for entry in self.original["pets"]}
+        saved_entries = {entry["species"]: entry for entry in before["pets"]}
+        draft_entries = {entry["species"]: entry for entry in self.draft["pets"]}
+        for entry in document["pets"]:
+            old = old_entries.get(entry["species"], {})
+            saved = saved_entries.get(entry["species"], {})
+            target = draft_entries.get(entry["species"])
+            if target is None:
+                target = copy.deepcopy(entry)
+                self.draft["pets"].append(target)
+            for key, value in entry.items():
+                if target.get(key) == old.get(key) or saved.get(key) != value:
+                    target[key] = copy.deepcopy(value)
+        # An explicit tray command also overrides pending visibility edits.
+        for entry in self.draft["pets"]:
+            if visibility and entry["species"] in visibility:
+                entry["enabled"] = visibility[entry["species"]]
+        for key, value in document.items():
+            if key != "pets" and (self.draft.get(key) == self.original.get(key) or before.get(key) != value):
+                self.draft[key] = copy.deepcopy(value)
+        self.original = copy.deepcopy(document)
+        self.select_species(self.species_list.currentItem())
 
     def discard(self):
         self.draft = copy.deepcopy(self.original)
@@ -917,8 +1005,11 @@ class SettingsPanel(QtWidgets.QWidget):
 
     def apply(self):
         if not self.quantity.hasAcceptableInput():
-            self.status.setText("Informe uma quantidade inteira a partir de zero.")
+            self.status.setText(f"Informe uma quantidade inteira de 0 a {MAX_PETS}.")
             self.quantity.setFocus()
+            return False
+        if sum(self.active_count(e) for e in self.draft['pets']) > MAX_PETS:
+            self.show_limit_notice()
             return False
         if not self.is_dirty():
             return True
@@ -936,6 +1027,8 @@ class SettingsPanel(QtWidgets.QWidget):
                     target = entries.setdefault(entry["species"], copy.deepcopy(entry))
                     target.update({key: copy.deepcopy(entry[key]) for key in FIELDS if key in entry})
                 current["pets"] = list(entries.values())
+                if sum(self.active_count(e) for e in current['pets']) > MAX_PETS:
+                    raise ValueError(f"Limite de {MAX_PETS} pets no total. Remova um pet antes de adicionar outro.")
                 documents[config_io.LIST_FILE] = current
             if self.layer != self.config.get("layer", "front"):
                 current = config_io.read_json(config_io.CONFIG_FILE)

@@ -81,3 +81,57 @@ Hashes confirmaram que os outros seis GIFs, pets_data.json e pets_list.json
 permanecem iguais aos anteriores a esta correção. A prévia muuri-arraste.gif
 foi atualizada. Reinicie a instância antiga para recarregar os frames.
 Sem commit ou push.
+
+
+## Escala 2x — 16/10/2026
+
+Todos os sete estados ativos foram ampliados exatamente 2x a partir dos GIFs
+anteriores: canvas de 80x64 para 160x128, mantendo o mesmo número de frames,
+os tempos por frame, o loop, a transparência e o conteúdo de cada pixel. A
+ampliação usa pixels inteiros para preservar o desenho pixelado e as cores.
+O tamanho `Original` passa a ter 128 px de altura. Os tamanhos fixos Pequeno,
+Médio, Grande e Bem grande continuam usando as alturas próprias do aplicativo.
+As fontes originais foram guardadas fora do repositório durante a revisão.
+
+## Estilo liso alternativo
+
+A primeira versão da opção **Liso** suavizava os GIFs pixelados por reamostragem
+Lanczos. Essa versão foi substituída em 24/10/2026 pelos assets descritos abaixo.
+
+## Liso redesenhado — 24/10/2026
+
+Os sete estados `idle`, `walk`, `walk_fast`, `run`, `swipe`, `lie` e `drag`
+agora usam `blue_smooth_<estado>_8fps.png`: PNGs animados (APNG), com oito
+frames RGBA, 125 ms por frame e loop contínuo. Canvas comum de **160x128 px**;
+o tamanho Original continua com 128 px de altura. Não são PNGs estáticos.
+
+A arte foi gerada em resolução maior a partir da referência canônica e de
+uma única base da Muuri: corpo branco, manchas azuis, cascos azul-marinho,
+chifres creme, focinho claro e ponta verde na cauda. O novo desenho usa
+contornos curvos reais, em vez de ampliar e filtrar os sprites pixelados.
+As bordas preservam níveis intermediários de alpha, que o GIF não suporta.
+
+O fluxo da skill `work-pets:create-pet` foi adaptado ao DeskPets: uma base,
+uma sequência por estado, extração por componentes, inspeção dos frames e
+normalização comum de escala e baseline. Os scripts oficiais de extração e
+inspeção foram executados com a geometria de trabalho 640x512 e os sete
+estados do aplicativo, sem modificar a skill instalada. A conversão final
+apenas enquadra e reduz os pixels gerados; não desenha partes do personagem.
+Não há atlas de ChatGPT, upload nem animações extras de direção.
+
+O carregador Pillow, a prévia Qt e os renderizadores existentes já aceitam
+APNG: nenhuma troca de engine foi necessária. O catálogo aponta somente
+o estilo Liso para os novos arquivos. Os GIFs `blue_<estado>_8fps.gif` do
+estilo **Pixelado**, os outros pets, os parâmetros de movimento/física e
+as preferências locais foram preservados. Uma correção na seleção do
+estado de descanso impede a volta involuntária ao asset pixelado quando
+o cursor se aproxima.
+
+Espelhamento esquerda/direita continua no engine; não há assets duplicados.
+As margens são transparentes e a cauda verde é opaca em todos os frames.
+O descanso mantém os cascos na mesma linha dos estados no chão; o arraste
+usa uma posição suspensa. Por serem sequências generativas, ainda podem
+existir pequenas variações de traço entre frames, sujeitas à revisão visual.
+
+Para escolher, abra o painel, selecione Muuri, escolha **Liso** e clique em
+**Aplicar**. Licença e créditos originais permanecem válidos.

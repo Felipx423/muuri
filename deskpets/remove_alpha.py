@@ -2,6 +2,7 @@ import ctypes
 import os
 import traceback
 import sys
+from collections import OrderedDict
 
 from PIL import Image
 
@@ -11,6 +12,48 @@ if sys.platform == "win32":
 
 
 class GifHelper:
+    FRAME_CACHE_LIMIT_BYTES = 64 * 1024 * 1024
+    _frame_cache = OrderedDict()
+    _frame_cache_bytes = 0
+
+    @classmethod
+    def load_resized_gif_frames(cls, path, target_height=None):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        absolute_path = os.path.realpath(os.path.join(base_dir, path))
+        key = (absolute_path, target_height, sys.platform == "win32")
+        cached = cls._frame_cache.get(key)
+        if cached is not None:
+            cls._frame_cache.move_to_end(key)
+            return list(cached)
+
+        frames = cls.load_gif_frames(path)
+        if not frames:
+            return frames
+
+        resized_frames = []
+        for frame in frames:
+            height = target_height if target_height is not None else frame.height
+            width = int(frame.width * height / frame.height)
+            resized_frames.append(frame.resize((width, height), Image.Resampling.LANCZOS))
+
+        cache_entry = tuple(resized_frames)
+        entry_bytes = sum(frame.width * frame.height * 4 for frame in cache_entry)
+        if entry_bytes <= cls.FRAME_CACHE_LIMIT_BYTES:
+            while (cls._frame_cache and
+                   cls._frame_cache_bytes + entry_bytes > cls.FRAME_CACHE_LIMIT_BYTES):
+                _, evicted = cls._frame_cache.popitem(last=False)
+                cls._frame_cache_bytes -= sum(frame.width * frame.height * 4 for frame in evicted)
+            cls._frame_cache[key] = cache_entry
+            cls._frame_cache_bytes += entry_bytes
+
+        return list(cache_entry)
+
+    @staticmethod
+    def _premultiplied_bgra(frame: Image.Image) -> bytes:
+        """Return top-down premultiplied BGRA bytes for a Windows DIB."""
+        rgba = frame.convert("RGBA").transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+        return rgba.convert("RGBa").tobytes("raw", "BGRa")
+
     @staticmethod
     def load_gif_frames(path):
         try:
@@ -35,20 +78,9 @@ class GifHelper:
     @staticmethod
     def pil_to_hbitmap(frame: Image.Image):
         try:
-            frame = frame.convert("RGBA").transpose(Image.FLIP_TOP_BOTTOM)
+            raw_data = GifHelper._premultiplied_bgra(frame)
             width, height = frame.size
-            pixels = frame.load()
-
-            raw_data = bytearray()
-            for y in range(height):
-                for x in range(width):
-                    r, g, b, a = pixels[x, y]
-                    r = r * a // 255
-                    g = g * a // 255
-                    b = b * a // 255
-                    raw_data += bytes([b, g, r, a])  # BGRA
-
-            raw_buffer = (ctypes.c_ubyte * len(raw_data))(*raw_data)
+            raw_buffer = (ctypes.c_ubyte * len(raw_data)).from_buffer_copy(raw_data)
 
             hdc = user32.GetDC(None)
             hdc_mem = gdi32.CreateCompatibleDC(hdc)

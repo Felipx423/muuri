@@ -1654,6 +1654,25 @@
                 "drag": "media/muuri/blue_drag_8fps.gif"
             }
         },
+        "styles": {
+            "pixel": {
+                "label": "Pixelado"
+            },
+            "smooth": {
+                "label": "Liso",
+                "states": {
+                    "blue": {
+                        "idle": "media/muuri/blue_smooth_idle_8fps.png",
+                        "lie": "media/muuri/blue_smooth_lie_8fps.png",
+                        "run": "media/muuri/blue_smooth_run_8fps.png",
+                        "swipe": "media/muuri/blue_smooth_swipe_8fps.png",
+                        "walk": "media/muuri/blue_smooth_walk_8fps.png",
+                        "walk_fast": "media/muuri/blue_smooth_walk_fast_8fps.png",
+                        "drag": "media/muuri/blue_smooth_drag_8fps.png"
+                    }
+                }
+            }
+        },
         "defaults": {
             "idle": {
                 "hold": 16,
@@ -1868,5 +1887,217 @@
                 "speed_animation": 1.0
             }
         }
+    },
+    "eco": {
+        "colors": [
+            "green"
+        ],
+        "states": {
+            "green": {
+                "idle": "media/eco/green_idle_8fps.gif",
+                "walk": "media/eco/green_walk_8fps.gif",
+                "walk_fast": "media/eco/green_walk_fast_8fps.gif",
+                "run": "media/eco/green_run_8fps.gif",
+                "swipe": "media/eco/green_swipe_8fps.gif",
+                "lie": "media/eco/green_lie_8fps.gif",
+                "drag": "media/eco/green_drag_8fps.gif"
+            }
+        },
+        "defaults": {
+            "idle": {
+                "hold": 16,
+                "movement_speed": 0,
+                "speed_animation": 0.75
+            },
+            "walk": {
+                "hold": 32,
+                "movement_speed": 2,
+                "speed_animation": 1.0
+            },
+            "walk_fast": {
+                "hold": 24,
+                "movement_speed": 4,
+                "speed_animation": 1.25
+            },
+            "run": {
+                "hold": 16,
+                "movement_speed": 6,
+                "speed_animation": 1.5
+            },
+            "swipe": {
+                "hold": 8,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            },
+            "lie": {
+                "hold": 24,
+                "movement_speed": 0,
+                "speed_animation": 0.65
+            },
+            "drag": {
+                "hold": 0,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            }
+        }
+    },
+    "voltinha": {
+        "colors": [
+            "green"
+        ],
+        "states": {
+            "green": {
+                "idle": "media/voltinha/green_idle_8fps.gif",
+                "walk": "media/voltinha/green_walk_8fps.gif",
+                "walk_fast": "media/voltinha/green_walk_fast_8fps.gif",
+                "run": "media/voltinha/green_run_8fps.gif",
+                "swipe": "media/voltinha/green_swipe_8fps.gif",
+                "lie": "media/voltinha/green_lie_8fps.gif",
+                "drag": "media/voltinha/green_drag_8fps.gif"
+            }
+        },
+        "defaults": {
+            "idle": {
+                "hold": 16,
+                "movement_speed": 0,
+                "speed_animation": 0.75
+            },
+            "walk": {
+                "hold": 32,
+                "movement_speed": 2,
+                "speed_animation": 1.0
+            },
+            "walk_fast": {
+                "hold": 24,
+                "movement_speed": 4,
+                "speed_animation": 1.25
+            },
+            "run": {
+                "hold": 16,
+                "movement_speed": 6,
+                "speed_animation": 1.5
+            },
+            "swipe": {
+                "hold": 8,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            },
+            "lie": {
+                "hold": 24,
+                "movement_speed": 0,
+                "speed_animation": 0.65
+            },
+            "drag": {
+                "hold": 0,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            }
+        }
+    },
+    "friguinho": {
+        "colors": [
+            "blue"
+        ],
+        "states": {
+            "blue": {
+                "idle": "media/friguinho/blue_idle_8fps.gif",
+                "walk": "media/friguinho/blue_walk_8fps.gif",
+                "walk_fast": "media/friguinho/blue_walk_fast_8fps.gif",
+                "run": "media/friguinho/blue_run_8fps.gif",
+                "swipe": "media/friguinho/blue_swipe_8fps.gif",
+                "lie": "media/friguinho/blue_lie_8fps.gif",
+                "drag": "media/friguinho/blue_drag_8fps.gif"
+            }
+        },
+        "defaults": {
+            "idle": {
+                "hold": 16,
+                "movement_speed": 0,
+                "speed_animation": 0.75
+            },
+            "walk": {
+                "hold": 32,
+                "movement_speed": 2,
+                "speed_animation": 1.0
+            },
+            "walk_fast": {
+                "hold": 24,
+                "movement_speed": 4,
+                "speed_animation": 1.25
+            },
+            "run": {
+                "hold": 16,
+                "movement_speed": 6,
+                "speed_animation": 1.5
+            },
+            "swipe": {
+                "hold": 8,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            },
+            "lie": {
+                "hold": 24,
+                "movement_speed": 0,
+                "speed_animation": 0.65
+            },
+            "drag": {
+                "hold": 0,
+                "movement_speed": 0,
+                "speed_animation": 1.0
+            }
+        }
+    },
+  "zack": {
+  "colors": [
+    "cream"
+  ],
+  "states": {
+    "cream": {
+      "idle": "media/zack/cream_idle_8fps.png",
+      "walk": "media/zack/cream_walk_8fps.png",
+      "walk_fast": "media/zack/cream_walk_fast_8fps.png",
+      "run": "media/zack/cream_run_8fps.png",
+      "swipe": "media/zack/cream_swipe_8fps.png",
+      "lie": "media/zack/cream_lie_8fps.png",
+      "drag": "media/zack/cream_drag_8fps.png"
     }
+  },
+  "defaults": {
+    "idle": {
+      "hold": 16,
+      "movement_speed": 0,
+      "speed_animation": 0.75
+    },
+    "walk": {
+      "hold": 32,
+      "movement_speed": 2,
+      "speed_animation": 1.0
+    },
+    "walk_fast": {
+      "hold": 24,
+      "movement_speed": 4,
+      "speed_animation": 1.25
+    },
+    "run": {
+      "hold": 16,
+      "movement_speed": 6,
+      "speed_animation": 1.5
+    },
+    "swipe": {
+      "hold": 8,
+      "movement_speed": 0,
+      "speed_animation": 1.0
+    },
+    "lie": {
+      "hold": 24,
+      "movement_speed": 0,
+      "speed_animation": 0.65
+    },
+    "drag": {
+      "hold": 0,
+      "movement_speed": 0,
+      "speed_animation": 1.0
+    }
+  }
+}
 }

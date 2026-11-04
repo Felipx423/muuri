@@ -22,6 +22,16 @@ WORK = ROOT/'build/macos'
 OUTPUT = ROOT/'dist/macos'
 
 
+def write_version_marker():
+    source = (ROOT/'deskpets/version.py').read_text(encoding='utf-8')
+    match = re.search(r'^\s*APP_VERSION\s*=\s*["\']([^"\']+)["\']\s*$', source, re.M)
+    if not match:
+        raise RuntimeError('Não foi possível determinar a versão do Muuri para o pacote')
+    marker = WORK/'MUURI-VERSION.txt'
+    marker.write_text(match.group(1)+'\n',encoding='utf-8')
+    return marker
+
+
 def clean_defaults():
     catalog = json.loads((ROOT/'deskpets/pets_data.json').read_text(encoding='utf-8'))
     entries = []
@@ -136,7 +146,7 @@ def verify(app):
 
 
 def write_hashes():
-    names = ('Muuri-macOS-arm64-teste.zip','Muuri-macOS-arm64-teste.dmg',
+    names = ('Muuri-macOS-arm64.zip','Muuri-macOS-arm64.dmg',
              'Muuri-macOS-codigo-fonte.zip','COMO-USAR-NO-MAC.md')
     lines = [hashlib.sha256((OUTPUT/name).read_bytes()).hexdigest()+'  '+name for name in names if (OUTPUT/name).exists()]
     (OUTPUT/'MUURI-macOS-SHA256.txt').write_text('\n'.join(lines)+'\n',encoding='utf-8')
@@ -146,6 +156,7 @@ def build(args):
     if not args.prepare_only and (sys.platform!='darwin' or platform.machine()!='arm64'):
         raise RuntimeError('O .app precisa ser compilado em um Mac com Python arm64. Use --prepare-only para preparar os fontes aqui.')
     defaults,source,embedded,icon = prepare()
+    version_marker = write_version_marker()
     if args.prepare_only:
         print('Fontes preparados, sem binário .app:',source)
         return
@@ -162,6 +173,7 @@ def build(args):
     if args.codesign_identity:
         args_list += ['--codesign-identity',args.codesign_identity]
     for path,target in ((ROOT/'deskpets/media','deskpets/media'),(ROOT/'deskpets/pets_data.json','deskpets'),
+                        (version_marker,'deskpets'),
                         (defaults/'pets_list.json','deskpets'),(defaults/'config.json','deskpets'),
                         (ROOT/'LICENSE','.'),(ROOT/'README.md','.'),(ROOT/'packaging/MACOS.md','.'),
                         (licenses(),'THIRD_PARTY_LICENSES'),(embedded,'.')):
@@ -183,7 +195,7 @@ def build(args):
     subprocess.run([*command,str(app)],check=True)
     verify(app)
     subprocess.run([sys.executable,str(ROOT/'packaging/smoke_macos.py'),str(app)],check=True)
-    archive = OUTPUT/'Muuri-macOS-arm64-teste.zip'
+    archive = OUTPUT/'Muuri-macOS-arm64.zip'
     subprocess.run(['ditto','-c','-k','--sequesterRsrc','--keepParent',str(app),str(archive)],check=True)
     if args.dmg:
         with tempfile.TemporaryDirectory(prefix='dmg-',dir=WORK) as folder:
@@ -191,9 +203,9 @@ def build(args):
             subprocess.run(['ditto',str(app),str(staging/'Muuri.app')],check=True)
             (staging/'Applications').symlink_to('/Applications',target_is_directory=True)
             subprocess.run(['hdiutil','create','-ov','-volname','Muuri','-srcfolder',str(staging),
-                            '-format','UDZO',str(OUTPUT/'Muuri-macOS-arm64-teste.dmg')],check=True)
+                            '-format','UDZO',str(OUTPUT/'Muuri-macOS-arm64.dmg')],check=True)
         subprocess.run([sys.executable,str(ROOT/'packaging/smoke_macos.py'),'--dmg',
-                        str(OUTPUT/'Muuri-macOS-arm64-teste.dmg')],check=True)
+                        str(OUTPUT/'Muuri-macOS-arm64.dmg')],check=True)
     write_hashes()
     print('Aplicativo:',app)
     print('Pacotes:',OUTPUT)

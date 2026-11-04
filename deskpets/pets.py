@@ -1,11 +1,8 @@
-import ctypes
 import json
 import os
 import random
 import time
 import traceback
-
-from PIL import Image
 
 from .remove_alpha import GifHelper
 from .squirrel_climb import squirrel_climb, go_climb
@@ -22,12 +19,18 @@ JSON_FILE = os.path.join(BASE_DIR, "pets_data.json")
 with open(JSON_FILE, "r", encoding="utf-8") as f:
     PETS_DATA = json.load(f)
 
+
+def states_for(species, color, style="pixel"):
+    data = PETS_DATA[species]
+    style_data = data.get("styles", {}).get(style, {})
+    return style_data.get("states", {}).get(color, data["states"][color])
+
 # Pet window
 class Pet:
     def __init__(self, species, color, fps, size, draggable=False, settings_clicks=0,
-                 movement_multiplier=1.0, animation_multiplier=1.0, physics_enabled=False):
+                 movement_multiplier=1.0, animation_multiplier=1.0, physics_enabled=False,
+                 style="pixel"):
         try:
-            self.hbitmaps = None
             self.frame_interval = None
             self.current_frame = None
             self.frame_count = None
@@ -36,6 +39,7 @@ class Pet:
             self.frames = None
             self.species = species
             self.color = color
+            self.style = style
             self.fps = fps
             self.size = size
             self.draggable = draggable
@@ -56,7 +60,7 @@ class Pet:
             species_data = PETS_DATA[species]
             defaults = species_data.get("defaults", {})
             self.STATES_INFO = {}
-            for state_name, gif_path in species_data["states"][color].items():
+            for state_name, gif_path in states_for(species, color, style).items():
                 state_defaults = defaults.get(state_name, {})
                 self.STATES_INFO[state_name] = {
                     "gif": gif_path,
@@ -90,7 +94,6 @@ class Pet:
             self.wall_scene_step = None
             self.scene_wallclimb = False
             self.fall_last_frame = None
-            self.fall_last_hbitmap = None
 
             self.height_lie = 20
         except Exception as e:
@@ -173,7 +176,7 @@ class Pet:
                 squirrel_climb(self)
                 return
 
-            color_states = PETS_DATA[self.species]["states"][self.color]
+            color_states = states_for(self.species, self.color, self.style)
             if "lie" in color_states and distance < self.height_lie and not self.immunity:
                 gif_path = color_states["lie"]
                 hold = self.lie_duration
@@ -209,28 +212,17 @@ class Pet:
 
     def frame_animation(self):
         try:
-            self.frames = []
-            for f in GifHelper.load_gif_frames(self.state.gif):
-                orig_width, orig_height = f.size
-                if self.size.lower() == "very small":
-                    new_height = 20
-                elif self.size.lower() == "small":
-                    new_height = 40
-                elif self.size.lower() == "original":
-                    new_height = orig_height
-                elif self.size.lower() == "medium":
-                    new_height = 125
-                elif self.size.lower() == "big":
-                    new_height = 150
-                elif self.size.lower() == "really big":
-                    new_height = 200
-                new_width = int(orig_width * new_height / orig_height)
-                resized = f.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                self.frames.append(resized)
-
-            self.height_lie = new_height
+            target_height = {
+                "very small": 20,
+                "small": 40,
+                "medium": 125,
+                "big": 150,
+                "really big": 200,
+            }.get(self.size.lower())
+            self.frames = GifHelper.load_resized_gif_frames(self.state.gif, target_height)
 
             self.width, self.height = self.frames[0].size
+            self.height_lie = self.height
             self.frame_count = len(self.frames)
             self.current_frame = 0
             self.state.counter = 0

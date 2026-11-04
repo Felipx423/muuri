@@ -14,7 +14,9 @@ Selecionar um cartão abre os ajustes. Use Adicionar à tela para ativar o pet.
 Os demais pets ativos são preservados; Aplicar alterações confirma as mudanças.
 Use o botão −, Remover espécie ou Remover todos e clique em Aplicar alterações.
 Quantidade zero também remove a espécie da área de trabalho.
-Muuri, Fefo, Cato e Manu ficam disponíveis, além dos pets originais.
+Muuri, Fefo, Cato, Manu e Eco ficam disponíveis, além dos pets originais.
+O limite é de 6 pets no total, contando espécies, cores e cópias.
+Ao chegar a 6, remova um pet ou reduza uma quantidade para adicionar outro.
 
 ATUALIZAR
 A partir da versão 1.2.0, o Muuri instalado procura novas versões ao abrir

@@ -1,5 +1,32 @@
 # Changelog
 
+## Muuri [1.4.4]
+### Changed
+- Muuri Liso recriado a partir da referência canônica, com sete animações APNG e transparência suave.
+### Fixed
+- O descanso provocado pela proximidade do cursor respeita o estilo visual escolhido.
+### Added
+- Atualização Windows com confirmação, verificação final de versão e diagnóstico persistente.
+- Atualização macOS com download verificado e abertura automática do DMG Apple Silicon.
+- Validação dos quatro artefatos de plataforma antes da publicação da release.
+
+## Muuri [1.4.0]
+### Added
+- Voltinha, com sete animações transparentes de 128 px derivadas de uma única base canônica.
+- Alternância entre os estilos pixelado e liso da Muuri no painel.
+- Favoritos e remoção imediata dos pets pelo menu da bandeja.
+### Changed
+- Sprites da Muuri ampliados para 160×128 px; o tamanho Original passa a 128 px.
+- Pets no macOS permanecem acima das janelas comuns mesmo quando outro app está ativo.
+
+## Muuri [1.3.0]
+### Added
+- Eco, com sete animações transparentes de 128 px e locomoção lateral.
+- Limite global de seis pets, com contador e bloqueio de novas adições no painel.
+### Changed
+- Configurações antigas acima do limite exibem somente os primeiros seis pets, sem reescrever preferências automaticamente.
+- Instalação e atualização pelo aplicativo preservam as preferências existentes.
+
 ## [1.2.0]
 ### Added
 - Settings panel

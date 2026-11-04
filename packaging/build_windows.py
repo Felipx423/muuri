@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -10,6 +11,16 @@ import importlib.metadata
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT.parent / 'work' / 'package'
 OUTPUT = ROOT.parents[1] / 'outputs'
+
+
+def write_version_marker():
+    source = (ROOT / 'deskpets/version.py').read_text(encoding='utf-8')
+    match = re.search(r'^\s*APP_VERSION\s*=\s*["\']([^"\']+)["\']\s*$', source, re.M)
+    if not match:
+        raise RuntimeError('Não foi possível determinar a versão do Muuri para o pacote')
+    marker = WORK / 'MUURI-VERSION.txt'
+    marker.write_text(match.group(1) + '\n', encoding='utf-8')
+    return marker
 
 
 def prepare_sources(defaults):
@@ -61,6 +72,7 @@ def build():
     defaults = WORK / 'defaults'
     defaults.mkdir(exist_ok=True)
     source, embedded_source = prepare_sources(defaults)
+    version_marker = write_version_marker()
     licenses = WORK / 'THIRD_PARTY_LICENSES'
     licenses.mkdir(exist_ok=True)
     for name in ('PyQt6', 'PyQt6-Qt6', 'PyQt6-sip', 'Pillow', 'pywin32', 'pyinstaller'):
@@ -83,6 +95,7 @@ def build():
             '--exclude-module', 'Foundation', '--exclude-module', 'objc']
     for src, dest in [(ROOT / 'deskpets/media', 'deskpets/media'),
                       (ROOT / 'deskpets/pets_data.json', 'deskpets'),
+                      (version_marker, 'deskpets'),
                       (defaults / 'pets_list.json', 'deskpets'), (defaults / 'config.json', 'deskpets'),
                       (ROOT / 'LICENSE', '.'), (ROOT / 'README.md', '.'),
                       (ROOT / 'packaging/LEIA-ME.txt', '.'), (licenses, 'THIRD_PARTY_LICENSES'),

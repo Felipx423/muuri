@@ -24,8 +24,8 @@ python3.12 -m venv .venv
 Saídas, relativas à raiz do projeto:
 
 - `build/macos/dist/Muuri.app`: aplicativo completo.
-- `dist/macos/Muuri-macOS-arm64-teste.zip`: aplicativo compactado com metadados/symlinks preservados pelo `ditto`.
-- `dist/macos/Muuri-macOS-arm64-teste.dmg`: imagem com aplicativo e atalho para Applications.
+- `dist/macos/Muuri-macOS-arm64.zip`: aplicativo compactado com metadados/symlinks preservados pelo `ditto`.
+- `dist/macos/Muuri-macOS-arm64.dmg`: imagem com aplicativo e atalho para Applications.
 - `dist/macos/Muuri-macOS-codigo-fonte.zip`: fonte completo com assets e preferências padrão, sem preferências pessoais.
 - `dist/macos/MUURI-macOS-SHA256.txt`: hashes dos arquivos finais.
 
@@ -39,7 +39,9 @@ Para executar pelo código, após instalar as dependências:
 
 Abra o DMG, arraste `Muuri.app` para Applications e abra o aplicativo pelo Finder. Quem recebe o `.app` não precisa instalar Python.
 
-O ícone da Muuri aparece na barra de menus, com **Abrir configurações**, **Atualizar pets** e **Sair**. O aplicativo fica residente nessa barra, sem exigir uma janela do painel aberta. Fechar o painel mantém os pets ativos. Quatro cliques rápidos em Muuri, Fefo, Cato ou Manu também abrem as configurações. No macOS, use as ações do menu do ícone; o menu nativo abre ao clicar, e o gesto de duplo clique do ícone não é a forma principal de abertura.
+O ícone da Muuri aparece na barra de menus, com **Abrir configurações**, **Atualizar pets**, **Verificar atualizações** e **Sair**. O aplicativo fica residente nessa barra, sem exigir uma janela do painel aberta. Fechar o painel mantém os pets ativos. Quatro cliques rápidos em Muuri, Fefo, Cato ou Manu também abrem as configurações. No macOS, use as ações do menu do ícone; o menu nativo abre ao clicar, e o gesto de duplo clique do ícone não é a forma principal de abertura.
+
+Quando houver uma versão nova, o Muuri baixa e verifica `Muuri-macOS-arm64.dmg` usando `MUURI-macOS-SHA256.txt` e abre a imagem no Finder. Arraste o `Muuri.app` para `Applications` e substitua a cópia existente. As preferências em `~/Library/Application Support/Muuri/` permanecem intactas. Como o app não é notarizado, o macOS pode pedir confirmação em **Privacidade e Segurança → Abrir Mesmo Assim**.
 
 Ative quantas espécies quiser, ajuste **Quantidade** para criar cópias e confirme em **Aplicar**. Tamanho, velocidades, arraste e física continuam por espécie. Fefo mantém seu perfil aéreo.
 
@@ -60,12 +62,12 @@ Para uma distribuição pública com Developer ID, depois de instalar o certific
 O builder assina os componentes com a identidade escolhida, ativa hardened runtime e verifica a assinatura final. A notarização é uma etapa adicional, usando credenciais guardadas no Keychain pelo `notarytool`; não coloque certificados, senhas ou chaves no repositório. Exemplo após configurar um perfil local chamado `MUURI_NOTARY`:
 
 ```bash
-xcrun notarytool submit dist/macos/Muuri-macOS-arm64-teste.dmg --keychain-profile MUURI_NOTARY --wait
-xcrun stapler staple dist/macos/Muuri-macOS-arm64-teste.dmg
-xcrun stapler validate dist/macos/Muuri-macOS-arm64-teste.dmg
+xcrun notarytool submit dist/macos/Muuri-macOS-arm64.dmg --keychain-profile MUURI_NOTARY --wait
+xcrun stapler staple dist/macos/Muuri-macOS-arm64.dmg
+xcrun stapler validate dist/macos/Muuri-macOS-arm64.dmg
 ```
 
-Após notarização/staple, recalcule os hashes do DMG alterado antes de publicar. O workflow `.github/workflows/build-macos.yml` prepara um candidato ad hoc no runner Apple Silicon, por acionamento manual ou por push na branch `feat/macos-support`; não publica uma release nem faz commit/push. O acionamento manual pela interface fica disponível quando o arquivo do workflow estiver na branch padrão; o gatilho de push permite testar a branch dedicada antes disso.
+Após notarização/staple, recalcule os hashes do DMG alterado antes de publicar. O workflow `.github/workflows/build-macos.yml` prepara um candidato ad hoc no runner Apple Silicon. Releases estáveis usam `.github/workflows/release.yml`: ao enviar uma tag `muuri-v*`, ele testa e compila Windows e macOS e publica os dois pacotes juntos.
 
 ## Validação
 

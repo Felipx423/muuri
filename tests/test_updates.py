@@ -13,11 +13,14 @@ from deskpets import updates
 from deskpets.update_controller import UpdateController
 
 
-def release_data(version="1.3.0", payload=b"verified installer"):
+def release_data(version=None, payload=b"verified installer"):
+    # Keep update fixtures newer than the app when preparing a new release.
+    version = version or f"{int(updates.APP_VERSION.split('.')[0])+1}.0.0"
     tag = "muuri-v" + version
     return dict(tag_name=tag, draft=False, prerelease=False, assets=[
         dict(name=name, size=len(payload), browser_download_url=f"https://github.com/{updates.REPOSITORY}/releases/download/{tag}/{name}")
-        for name in (updates.INSTALLER_NAME, "MUURI-SHA256.txt")])
+        for name in (updates.INSTALLER_NAME, "MUURI-SHA256.txt",
+                     updates.MACOS_INSTALLER_NAME, updates.MACOS_CHECKSUM_NAME)])
 
 
 class Response(io.BytesIO):
@@ -27,7 +30,7 @@ class Response(io.BytesIO):
 
 class UpdateTests(unittest.TestCase):
     def test_only_newer_stable_releases_with_both_official_assets(self):
-        self.assertEqual(updates.parse_release(release_data(), "1.2.0").version, "1.3.0")
+        self.assertEqual(updates.parse_release(release_data("1.3.0"), "1.2.0").version, "1.3.0")
         self.assertIsNone(updates.parse_release(release_data("1.2.0"), "1.2.0"))
         self.assertIsNone(updates.parse_release(release_data("1.1.1"), "1.2.0"))
         for flag in ("draft", "prerelease"):
@@ -57,6 +60,8 @@ class UpdateTests(unittest.TestCase):
         digest = "a" * 64
         self.assertEqual(updates.installer_checksum((digest + "  Muuri-Setup.exe\n").encode()), digest)
         self.assertEqual(updates.installer_checksum((digest + " *Muuri-Setup.exe\n").encode()), digest)
+        self.assertEqual(updates.asset_checksum((digest + "  Muuri-macOS-arm64.dmg\n").encode(),
+                                                updates.MACOS_INSTALLER_NAME), digest)
         for text in (digest+"  another.exe", digest+"  ../Muuri-Setup.exe", "invalid", (digest+"  Muuri-Setup.exe\n")*2):
             with self.assertRaises(ValueError):
                 updates.installer_checksum(text.encode())
@@ -72,13 +77,27 @@ class UpdateTests(unittest.TestCase):
                 with patch.object(updates, "_read_small", return_value=manifest), \
                         patch.object(updates, "urlopen", return_value=Response(received)):
                     if success:
-                        path, expected = updates.download_update(release, folder)
+                        path, expected = updates.download_update(release, folder, platform_name="windows")
                         self.assertEqual(path.read_bytes(), payload)
                         self.assertEqual(expected, digest)
                     else:
                         with self.assertRaises((ValueError, InterruptedError)):
-                            updates.download_update(release, folder, cancelled=lambda: cancelled)
+                            updates.download_update(release, folder, cancelled=lambda: cancelled,
+                                                    platform_name="windows")
                         self.assertEqual(list(Path(folder).iterdir()), [])
+
+    def test_macos_download_uses_dmg_and_macos_manifest(self):
+        payload = b"verified dmg"
+        digest = hashlib.sha256(payload).hexdigest()
+        manifest = (digest + "  Muuri-macOS-arm64.dmg").encode()
+        release = updates.parse_release(release_data(payload=payload))
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(updates, "_read_small", return_value=manifest), \
+                patch.object(updates, "urlopen", return_value=Response(payload)):
+            path, expected = updates.download_update(release, folder, platform_name="macos")
+            self.assertEqual(path.name, updates.MACOS_INSTALLER_NAME)
+            self.assertEqual(path.read_bytes(), payload)
+            self.assertEqual(expected, digest)
 
     def test_same_length_corruption_and_insecure_redirect_are_rejected(self):
         payload = b"verified installer"
@@ -88,7 +107,7 @@ class UpdateTests(unittest.TestCase):
                 patch.object(updates, "_read_small", return_value=(digest+"  Muuri-Setup.exe").encode()), \
                 patch.object(updates, "urlopen", return_value=Response(b"x"*len(payload))):
             with self.assertRaisesRegex(ValueError, "verificação"):
-                updates.download_update(release, folder)
+                updates.download_update(release, folder, platform_name="windows")
         response = Response()
         response.geturl = lambda: "http://release-assets.githubusercontent.com/test"
         with self.assertRaises(ValueError):
@@ -107,6 +126,25 @@ class UpdateTests(unittest.TestCase):
             self.assertIn("Muuri''s & test", script)
             self.assertIn("} '", script)
             self.assertNotIn("ExecutionPolicy", " ".join(command))
+
+    def test_installer_helper_checks_target_version(self):
+        with tempfile.TemporaryDirectory() as folder:
+            installer = Path(folder) / updates.INSTALLER_NAME
+            installer.write_bytes(b"test")
+            command = updates.installer_command(installer, "a" * 64, Path(folder) / "installed", 123, "1.4.4")
+            script = command[-1]
+            self.assertIn("MUURI-VERSION.txt", script)
+            self.assertIn("1.4.4", script)
+
+    def test_macos_launcher_rechecks_hash_and_opens_dmg(self):
+        with tempfile.TemporaryDirectory() as folder:
+            image = Path(folder) / updates.MACOS_INSTALLER_NAME
+            image.write_bytes(b"dmg")
+            digest = hashlib.sha256(image.read_bytes()).hexdigest()
+            with patch.object(updates.sys, "platform", "darwin"), \
+                    patch.object(updates.subprocess, "Popen") as popen:
+                updates.launch_macos_dmg(image, digest)
+            popen.assert_called_once_with(["open", str(image.resolve())], close_fds=True)
 
     def test_development_run_cannot_install_or_check_automatically(self):
         with patch.object(updates.sys, "frozen", False, create=True):
@@ -131,7 +169,7 @@ class UpdateControllerTests(unittest.TestCase):
         self.app.processEvents()
 
     def test_no_network_on_source_startup_and_only_one_check_runs_at_a_time(self):
-        with patch.object(updates, "can_install_update", return_value=False), \
+        with patch.object(updates, "can_check_for_update", return_value=False), \
                 patch.object(updates, "check_for_update") as check:
             self.controller.start()
             self.controller.check_automatically()
@@ -147,11 +185,29 @@ class UpdateControllerTests(unittest.TestCase):
         self.assertEqual(first.value, "completed")
 
     def test_download_does_not_exit_or_install_when_pending_changes_are_kept(self):
+        self.controller.asset_platform = "windows"
         self.owner.panel.allow_close = lambda: False
-        with patch.object(updates, "launch_installer") as launch:
+        with patch.object(updates, "launch_installer") as launch, \
+                patch.object(QtWidgets.QMessageBox, "warning") as warning:
             self.controller.downloaded((Path("Muuri-Setup.exe"), "a"*64))
             launch.assert_not_called()
+            warning.assert_not_called()
         self.assertIsNotNone(self.controller.ready)
+
+    def test_macos_download_opens_dmg_without_windows_install_or_shutdown(self):
+        self.controller.asset_platform = "macos"
+        ready = (Path("Muuri-macOS-arm64.dmg"), "a"*64)
+        with patch.object(updates, "launch_macos_dmg") as open_dmg, \
+                patch.object(updates, "launch_installer") as install, \
+                patch.object(QtWidgets.QMessageBox, "warning") as warning, \
+                patch.object(QtWidgets.QApplication, "quit") as quit_app:
+            self.controller.downloaded(ready)
+            open_dmg.assert_called_once_with(*ready)
+            install.assert_not_called()
+            warning.assert_not_called()
+            quit_app.assert_not_called()
+        self.assertEqual(self.controller.ready, ready)
+        self.assertIn("DMG aberto", self.owner.panel.update_status_label.text())
 
     def test_automatic_network_failure_is_quiet_and_leaves_pets_untouched(self):
         self.controller.automatic = True

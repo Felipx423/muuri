@@ -1,5 +1,4 @@
 """Non-blocking update checks and user-controlled installation for the Qt app."""
-import sys
 from pathlib import Path
 
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -33,13 +32,14 @@ class UpdateController(QtCore.QObject):
         self.ready = None
         self.automatic = False
         self.stopping = False
+        self.asset_platform = updates.platform_asset() if updates.supported_platform() else None
         self.timer = QtCore.QTimer(self)
         self.timer.setInterval(6 * 60 * 60 * 1000)
         self.timer.timeout.connect(self.check_automatically)
         owner.panel.update_button.clicked.connect(self.check_manually)
 
     def start(self):
-        if updates.can_install_update():
+        if updates.can_check_for_update():
             self.timer.start()
             QtCore.QTimer.singleShot(5000, self.check_automatically)
 
@@ -69,13 +69,13 @@ class UpdateController(QtCore.QObject):
             completed(task.value)
 
     def check_automatically(self):
-        if self.stopping or self.release or not updates.can_install_update():
+        if self.stopping or self.release or not updates.can_check_for_update():
             return
         self.automatic = True
         self.check()
 
     def check_manually(self):
-        if sys.platform != "win32":
+        if not updates.can_check_for_update():
             QtGui.QDesktopServices.openUrl(QtCore.QUrl(updates.RELEASES_URL))
             return
         self.automatic = False
@@ -109,13 +109,17 @@ class UpdateController(QtCore.QObject):
     def offer_install(self):
         if self.stopping or self.release is None or (self.task and self.task.isRunning()):
             return
-        if not updates.can_install_update():
+        if not updates.can_check_for_update():
             QtGui.QDesktopServices.openUrl(QtCore.QUrl(updates.RELEASES_URL))
             return
         box = QtWidgets.QMessageBox(self.owner)
         box.setWindowTitle("Atualizar Muuri")
-        box.setText(f"Instalar o Muuri {self.release.version} agora?")
-        box.setInformativeText("O aplicativo vai baixar a atualização, fechar e abrir novamente. Seus pets e preferências serão mantidos.")
+        box.setText(f"Atualizar o Muuri {self.release.version} agora?")
+        if self.asset_platform == "macos":
+            info = "O DMG será baixado e aberto no Finder. Arraste o Muuri para Aplicativos para concluir; suas preferências serão mantidas."
+        else:
+            info = "O aplicativo vai baixar a atualização, fechar e abrir novamente. Seus pets e preferências serão mantidos."
+        box.setInformativeText(info)
         install = box.addButton("Atualizar agora", QtWidgets.QMessageBox.ButtonRole.AcceptRole)
         later = box.addButton("Mais tarde", QtWidgets.QMessageBox.ButtonRole.RejectRole)
         box.setDefaultButton(later)
@@ -129,17 +133,26 @@ class UpdateController(QtCore.QObject):
         cache = Path(QtCore.QStandardPaths.writableLocation(QtCore.QStandardPaths.StandardLocation.CacheLocation)) / "updates"
         self._status("Preparando download…", True)
         self._run(lambda task: updates.download_update(self.release, cache, task.progress.emit,
-                                                       task.isInterruptionRequested), self.downloaded)
+                                                       task.isInterruptionRequested, self.asset_platform), self.downloaded)
 
     def downloaded(self, ready):
         if self.stopping:
             return
         self.ready = ready
+        if self.asset_platform == "macos":
+            try:
+                updates.launch_macos_dmg(*ready)
+            except Exception as error:
+                self.failed(str(error))
+                return
+            self._status("DMG aberto. Arraste o Muuri para Aplicativos para concluir.")
+            return
         self._status("Atualização pronta para instalar.")
         if not self.owner.panel.allow_close():
             return
+        self._status("Instalando atualização…", True)
         try:
-            updates.launch_installer(*ready)
+            updates.launch_installer(ready[0], ready[1], self.release.version)
         except Exception as error:
             self.failed(str(error))
             return
@@ -149,7 +162,7 @@ class UpdateController(QtCore.QObject):
     def failed(self, message):
         if self.stopping:
             return
-        self._status("Não foi possível atualizar agora. Tente novamente quando estiver conectado.")
+        self._status("Falha na atualização. Tente novamente ou abra os detalhes desta mensagem.")
         self.owner.panel.update_status_label.setToolTip(message)
         if not self.automatic:
             QtWidgets.QMessageBox.warning(self.owner, "Atualização do Muuri", message)
