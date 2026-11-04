@@ -2046,5 +2046,58 @@
                 "speed_animation": 1.0
             }
         }
+    },
+  "zack": {
+  "colors": [
+    "cream"
+  ],
+  "states": {
+    "cream": {
+      "idle": "media/zack/cream_idle_8fps.png",
+      "walk": "media/zack/cream_walk_8fps.png",
+      "walk_fast": "media/zack/cream_walk_fast_8fps.png",
+      "run": "media/zack/cream_run_8fps.png",
+      "swipe": "media/zack/cream_swipe_8fps.png",
+      "lie": "media/zack/cream_lie_8fps.png",
+      "drag": "media/zack/cream_drag_8fps.png"
     }
+  },
+  "defaults": {
+    "idle": {
+      "hold": 16,
+      "movement_speed": 0,
+      "speed_animation": 0.75
+    },
+    "walk": {
+      "hold": 32,
+      "movement_speed": 2,
+      "speed_animation": 1.0
+    },
+    "walk_fast": {
+      "hold": 24,
+      "movement_speed": 4,
+      "speed_animation": 1.25
+    },
+    "run": {
+      "hold": 16,
+      "movement_speed": 6,
+      "speed_animation": 1.5
+    },
+    "swipe": {
+      "hold": 8,
+      "movement_speed": 0,
+      "speed_animation": 1.0
+    },
+    "lie": {
+      "hold": 24,
+      "movement_speed": 0,
+      "speed_animation": 0.65
+    },
+    "drag": {
+      "hold": 0,
+      "movement_speed": 0,
+      "speed_animation": 1.0
+    }
+  }
+}
 }
