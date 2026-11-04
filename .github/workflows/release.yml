@@ -90,7 +90,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "${GITHUB_REF_NAME}" = "muuri-v1.4.4"
+          test "${GITHUB_REF_NAME}" = "muuri-v1.4.5"
           test -s release-assets/windows/Muuri-Setup.exe
           test -s release-assets/windows/MUURI-SHA256.txt
           test -s release-assets/macos/Muuri-macOS-arm64.dmg
@@ -105,7 +105,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: Muuri 1.4.4 — Muuri Liso e atualizações confiáveis
+          name: Muuri 1.4.5 — Zack
           target_commitish: ${{ github.sha }}
           draft: false
           prerelease: false
@@ -116,6 +116,6 @@ jobs:
           body: |
             O Muuri Liso foi recriado a partir da referência canônica, com sete animações, contornos novos e transparência suave. Escolha Muuri → Liso → Aplicar no painel. O tamanho Original continua com 128 px e o estilo Pixelado permanece disponível. Corrigida a troca involuntária para o estilo pixelado durante o descanso.
 
-            Muuri 1.4.4 melhora o atualizador: o Windows confirma a instalação e verifica a versão instalada, enquanto o macOS baixa e abre o DMG verificado para substituição pelo Finder. A publicação valida os quatro artefatos antes de marcar a release como latest.
+            Muuri 1.4.5 adiciona Zack, um robô creme com rosto azul, antenas verdes e sete animações suaves em 128 px: parado, caminhada, trote, corrida, reação, descanso e arraste. Zack usa o sistema genérico de pets e aparece desativado inicialmente no painel.
 
             Esta publicação inclui instalador Windows x64 e aplicativo macOS Apple Silicon (M1 ou posterior, macOS 13+). O aplicativo Mac ainda não é notarizado pela Apple; consulte `packaging/MACOS.md` no código-fonte para as instruções de primeira abertura.
