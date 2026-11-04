@@ -40,6 +40,41 @@ class ZackAssetTests(unittest.TestCase):
                 cycles.append(b"".join(frames))
         self.assertEqual(len(set(cycles)), 7)
 
+    def test_locomotion_base_faces_right_and_mirrors_left(self):
+        """The visible side module stays behind Zack's right-facing head."""
+        for state in ("walk", "walk_fast", "run"):
+            path = PETS_DATA["zack"]["states"]["cream"][state]
+            with self.subTest(state=state), Image.open(config_io.BASE_DIR / path) as animation:
+                for index in range(animation.n_frames):
+                    animation.seek(index)
+                    frame = animation.convert("RGBA")
+                    green_x = [
+                        x
+                        for y in range(25, 70)
+                        for x in range(frame.width)
+                        if (lambda r, g, b, a: a > 100 and g > 110 and g > r * 1.2 and g > b * 0.9)(
+                            *frame.getpixel((x, y))
+                        )
+                    ]
+                    self.assertTrue(green_x)
+                    self.assertLess(sum(green_x) / len(green_x), frame.width / 2)
+
+    def test_drag_has_real_transparency_without_a_square_backdrop(self):
+        path = PETS_DATA["zack"]["states"]["cream"]["drag"]
+        with Image.open(config_io.BASE_DIR / path) as animation:
+            for index in range(animation.n_frames):
+                animation.seek(index)
+                alpha = animation.convert("RGBA").getchannel("A")
+                inset = 12
+                border = (
+                    [(x, inset) for x in range(inset, alpha.width - inset)]
+                    + [(x, alpha.height - inset - 1) for x in range(inset, alpha.width - inset)]
+                    + [(inset, y) for y in range(inset, alpha.height - inset)]
+                    + [(alpha.width - inset - 1, y) for y in range(inset, alpha.height - inset)]
+                )
+                transparent = sum(alpha.getpixel(point) == 0 for point in border)
+                self.assertGreater(transparent / len(border), 0.8)
+
 
 if __name__ == "__main__":
     unittest.main()
